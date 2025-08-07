@@ -1,12 +1,18 @@
-from flask import Flask, request, jsonify
+import os
+from flask import Flask
+from models import db
+from routes import bp
+from config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
+db.init_app(app)
+app.register_blueprint(bp)
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "ok", "message": "RAGnarok backend running"}), 200
-
-# TODO: Add endpoints for file upload, chat, knowledge retrieval
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(host="0.0.0.0", port=5000)
