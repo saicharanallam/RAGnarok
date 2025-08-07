@@ -1,0 +1,8 @@
+/* Add this to your CSS file or in a <style> tag */
+.card-shadow {
+  box-shadow: 0 4px 24px 0 #FFB34733, 0 2px 8px #0002;
+  transition: box-shadow 0.2s;
+}
+.card-shadow:hover {
+  box-shadow: 0 4px 32px 0 #FFB34766, 0 2px 8px #0004;
+}

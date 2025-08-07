@@ -25,11 +25,14 @@
 
 1. Clone the repo
 2. Install Docker & Docker Compose
-3. Build and run all services:
+3. Build and run all services (the first run will download required Docker images):
 
 ```bash
-docker compose up --build
+sudo docker-compose up --build
 ```
+
+- The first time you run this command, Docker will automatically download the necessary images for Python, Node, and Postgres.
+- Subsequent runs will use the cached images unless you change the Dockerfiles or dependencies.
 
 Frontend will be available at `http://localhost:3000`  
 Backend API at `http://localhost:5000`

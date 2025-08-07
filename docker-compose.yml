@@ -1,16 +1,24 @@
-version: "3.8"
+version: "3.7"
 services:
   backend:
     build: ./backend
+    volumes:
+      - ./backend:/app
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ragnarok
+      - FLASK_ENV=development
+      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:postgres@db:5432/ragnarok
     depends_on:
       - db
+      - ollama
+    command: /bin/sh -c "python init_db.py && gunicorn -b 0.0.0.0:5000 --timeout 120 app:app"
 
   frontend:
     build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
       - "3000:3000"
     depends_on:
@@ -27,5 +35,13 @@ services:
     ports:
       - "5432:5432"
 
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
 volumes:
   pgdata:
+  ollama_data:
