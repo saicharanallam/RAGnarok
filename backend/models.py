@@ -8,3 +8,5 @@ class PDF(db.Model):
     filename = db.Column(db.String(256), nullable=False)
     filepath = db.Column(db.String(512), nullable=False)
     upload_time = db.Column(db.DateTime, default=datetime.utcnow)
+    processed = db.Column(db.Boolean, default=False)
+    chunk_count = db.Column(db.Integer, default=0)
