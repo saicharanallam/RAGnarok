@@ -41,10 +41,17 @@ export default function LLMInteractCard() {
         body: JSON.stringify({ prompt: userMsg }),
       });
       const data = await res.json();
-      setChat((prev) => [
-        ...prev,
-        { role: "llm", text: data.response || data.error || "No response." },
-      ]);
+      
+      // Create response with metadata
+      const responseObj = {
+        role: "llm",
+        text: data.response || data.error || "No response.",
+        sources: data.sources_used || [],
+        contextFound: data.context_found || false,
+        ragEnabled: data.rag_enabled !== false
+      };
+      
+      setChat((prev) => [...prev, responseObj]);
     } catch {
       setChat((prev) => [
         ...prev,
@@ -152,16 +159,49 @@ export default function LLMInteractCard() {
             style={{
               margin: "8px 0",
               alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-              background: msg.role === "user" ? "#FFB34722" : "#222c3a",
-              color: msg.role === "user" ? "#FFB347" : "#fff",
-              borderRadius: 8,
-              padding: "8px 14px",
               maxWidth: "80%",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
             }}
           >
-            {msg.text}
+            <div
+              style={{
+                background: msg.role === "user" ? "#FFB34722" : "#222c3a",
+                color: msg.role === "user" ? "#FFB347" : "#fff",
+                borderRadius: 8,
+                padding: "8px 14px",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
+              {msg.text}
+            </div>
+            {msg.role === "llm" && msg.sources && msg.sources.length > 0 && (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: "#FFB347",
+                  background: "rgba(255, 179, 71, 0.1)",
+                  borderRadius: 4,
+                  padding: "4px 8px",
+                }}
+              >
+                📚 Sources: {msg.sources.join(", ")}
+              </div>
+            )}
+            {msg.role === "llm" && msg.contextFound === false && msg.ragEnabled && (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: "#FF9800",
+                  background: "rgba(255, 152, 0, 0.1)",
+                  borderRadius: 4,
+                  padding: "4px 8px",
+                }}
+              >
+                ℹ️ No relevant documents found - answered from general knowledge
+              </div>
+            )}
           </div>
         ))}
         <div ref={chatEndRef} />
