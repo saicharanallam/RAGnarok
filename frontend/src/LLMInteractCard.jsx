@@ -1,82 +1,36 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 
-function AnimatedDots() {
-  const [dots, setDots] = useState("");
-  useEffect(() => {
-    if (!dots && typeof window === "undefined") return;
-    const interval = setInterval(() => {
-      setDots((prev) => (prev.length < 3 ? prev + "." : ""));
-    }, 400);
-    return () => clearInterval(interval);
-  }, [dots]);
-  return <span>{dots}</span>;
-}
-
-export default function LLMInteractCard() {
-  const [expanded, setExpanded] = useState(true);
-  const [prompt, setPrompt] = useState("");
+const PDFListCard = forwardRef((props, ref) => {
+  const [pdfs, setPdfs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [chat, setChat] = useState([]); // [{role: "user"|"llm", text: string}]
-  const cardWidth = 800;
-  const chatEndRef = useRef(null);
+  const [expanded, setExpanded] = useState(true);
+  const cardWidth = 500;
 
-  // Scroll to bottom when chat updates
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chat, expanded]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!prompt.trim()) return;
-    const userMsg = prompt;
-    setChat((prev) => [...prev, { role: "user", text: userMsg }]);
-    setPrompt("");
+  const fetchPDFs = () => {
     setLoading(true);
-    try {
-      const res = await fetch("/api/llm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userMsg }),
-      });
-      const data = await res.json();
-      
-      // Create response with metadata
-      const responseObj = {
-        role: "llm",
-        text: data.response || data.error || "No response.",
-        sources: data.sources_used || [],
-        contextFound: data.context_found || false,
-        ragEnabled: data.rag_enabled !== false
-      };
-      
-      setChat((prev) => [...prev, responseObj]);
-    } catch {
-      setChat((prev) => [
-        ...prev,
-        { role: "llm", text: "Error contacting LLM backend." },
-      ]);
-    }
-    setLoading(false);
+    fetch("/api/pdfs")
+      .then((res) => res.json())
+      .then((data) => {
+        setPdfs(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (!loading && prompt.trim()) {
-        handleSubmit(e);
-      }
-    }
-  };
+  useEffect(() => {
+    fetchPDFs();
+  }, []);
 
+  useImperativeHandle(ref, () => ({
+    refreshPDFs: fetchPDFs
+  }));
+
+  // Collapsed view
   if (!expanded) {
     return (
       <div
         style={{
-          width: "100%",
-          maxWidth: cardWidth,
-          minWidth: 320,
+          width: cardWidth,
           margin: "24px auto",
           borderRadius: 12,
           background: "#182635",
@@ -88,8 +42,8 @@ export default function LLMInteractCard() {
         }}
         onClick={() => setExpanded(true)}
       >
-        <h3 style={{ color: "#FFB347", margin: 0 }}>
-          LLM Interaction
+        <h3 style={{ color: "#FFB347", margin: 0, marginBottom: 16 }}>
+          Uploaded PDFs
         </h3>
         <div style={{ color: "#FF6600", marginTop: 8, fontSize: 14 }}>
           Click to expand
@@ -98,25 +52,18 @@ export default function LLMInteractCard() {
     );
   }
 
+  // Expanded view
   return (
     <div
       style={{
-        width: "100%",
-        maxWidth: 900, // wider
-        minWidth: 320,
+        width: cardWidth,
         margin: "24px auto",
-        borderRadius: 18,
-        background: "rgba(24, 38, 53, 0.2)", // translucent
-        boxShadow: "0 4px 32px 0 #0006, 0 2px 8px #0002",
+        borderRadius: 12,
+        background: "#182635",
+        boxShadow: "0 2px 16px #0008",
         padding: 24,
         cursor: "default",
         transition: "all 0.2s",
-        display: "flex",
-        flexDirection: "column",
-        height: "56vh", // shorter
-        maxHeight: "60vh",
-        backdropFilter: "blur(6px)", // optional: glass effect
-        WebkitBackdropFilter: "blur(6px)", // for Safari
       }}
     >
       <h3
@@ -125,123 +72,102 @@ export default function LLMInteractCard() {
           margin: 0,
           marginBottom: 20,
           cursor: "pointer",
-          userSelect: "none"
         }}
         onClick={() => setExpanded(false)}
         title="Click to collapse"
       >
-        Ask RAGnarok
+        Uploaded PDFs
       </h3>
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          marginBottom: 16,
-          background: "rgba(26, 34, 51, 0.2)", // translucent chat area
-          borderRadius: 8,
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-          maxHeight: "60vh",
-          backdropFilter: "blur(4px)", // subtle glass effect
-          WebkitBackdropFilter: "blur(4px)",
-        }}
-      >
-        {chat.length === 0 && (
-          <div style={{ color: "#aaa", textAlign: "center" }}>
-            Start the conversation!
-          </div>
+      <div>
+        {loading && (
+          <div style={{ color: "#FFB347", marginTop: 16 }}>Loading...</div>
         )}
-        {chat.map((msg, idx) => (
-          <div
-            key={idx}
-            style={{
-              margin: "8px 0",
-              alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-              maxWidth: "80%",
-            }}
-          >
-            <div
+        {!loading && pdfs.length === 0 && (
+          <div style={{ color: "#aaa", marginTop: 16 }}>No PDFs uploaded yet.</div>
+        )}
+        {!loading && pdfs.length > 0 && (
+          <div style={{ width: "100%", overflowX: "auto" }}>
+            <table
               style={{
-                background: msg.role === "user" ? "#FFB34722" : "#222c3a",
-                color: msg.role === "user" ? "#FFB347" : "#fff",
-                borderRadius: 8,
-                padding: "8px 14px",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
+                width: "100%",
+                minWidth: 400, // optional: ensures table doesn't shrink too much
+                marginTop: 12,
+                borderCollapse: "collapse",
               }}
             >
-              {msg.text}
-            </div>
-            {msg.role === "llm" && msg.sources && msg.sources.length > 0 && (
-              <div
-                style={{
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: "#FFB347",
-                  background: "rgba(255, 179, 71, 0.1)",
-                  borderRadius: 4,
-                  padding: "4px 8px",
-                }}
-              >
-                📚 Sources: {msg.sources.join(", ")}
-              </div>
-            )}
-            {msg.role === "llm" && msg.contextFound === false && msg.ragEnabled && (
-              <div
-                style={{
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: "#FF9800",
-                  background: "rgba(255, 152, 0, 0.1)",
-                  borderRadius: 4,
-                  padding: "4px 8px",
-                }}
-              >
-                ℹ️ No relevant documents found - answered from general knowledge
-              </div>
-            )}
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      color: "#FFB347",
+                      textAlign: "left",
+                      paddingBottom: 8,
+                      borderBottom: "1px solid #333",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Filename
+                  </th>
+                  <th
+                    style={{
+                      color: "#FFB347",
+                      textAlign: "left",
+                      paddingBottom: 8,
+                      borderBottom: "1px solid #333",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Status
+                  </th>
+                  <th
+                    style={{
+                      color: "#FFB347",
+                      textAlign: "left",
+                      paddingBottom: 8,
+                      borderBottom: "1px solid #333",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Uploaded
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pdfs.map((pdf) => (
+                  <tr key={pdf.id}>
+                    <td style={{ color: "#fff", padding: "6px 0", whiteSpace: "nowrap" }}>
+                      {pdf.filename}
+                    </td>
+                    <td style={{ padding: "6px 0", whiteSpace: "nowrap" }}>
+                      {pdf.processed ? (
+                        <span style={{ color: "#4CAF50", fontSize: 13 }}>
+                          ✓ Processed ({pdf.chunk_count} chunks)
+                        </span>
+                      ) : (
+                        <span style={{ color: "#FF9800", fontSize: 13 }}>
+                          ⚠ Not processed
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      style={{
+                        color: "#FFB347",
+                        fontSize: 13,
+                        padding: "6px 0",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      {new Date(pdf.uploaded).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
-        <div ref={chatEndRef} />
+        )}
       </div>
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
-        <textarea
-          value={prompt}
-          onChange={e => setPrompt(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={2}
-          style={{
-            flex: 1,
-            borderRadius: 8,
-            border: "1px solid #FFB347",
-            padding: 12,
-            fontSize: 16,
-            background: "#222c3a",
-            color: "#fff",
-            resize: "none"
-          }}
-          placeholder="Type your message..."
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          disabled={loading || !prompt.trim()}
-          style={{
-            background: "linear-gradient(90deg, #FFB347 0%, #FF6600 100%)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            padding: "10px 24px",
-            fontWeight: "bold",
-            fontSize: 16,
-            cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? <>Waiting<AnimatedDots /></> : "Send"}
-        </button>
-      </form>
     </div>
   );
-}
+});
+
+export default PDFListCard;
