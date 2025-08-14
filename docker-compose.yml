@@ -4,6 +4,7 @@ services:
     build: ./backend
     volumes:
       - ./backend:/app
+      - chroma_data:/app/chroma_db
     ports:
       - "5000:5000"
     environment:
@@ -12,7 +13,7 @@ services:
     depends_on:
       - db
       - ollama
-    command: /bin/sh -c "python init_db.py && gunicorn -b 0.0.0.0:5000 --timeout 120 app:app"
+    command: /bin/sh -c "python init_db.py && python migrate_db.py && gunicorn -b 0.0.0.0:5000 --timeout 120 app:app"
 
   frontend:
     build: ./frontend
@@ -45,3 +46,4 @@ services:
 volumes:
   pgdata:
   ollama_data:
+  chroma_data:
