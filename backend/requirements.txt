@@ -2,6 +2,9 @@ flask
 gunicorn
 psycopg2-binary
 flask_sqlalchemy
-psycopg2-binary
 requests
-# Add PDF/image parsing libs, LLM libs as needed
+sentence-transformers
+chromadb
+pdfplumber
+numpy
+scikit-learn
