@@ -6,38 +6,47 @@
 
 ### 🧠 Smart Document Processing
 - **Automatic PDF Processing**: Upload PDFs and they're immediately processed through the RAG pipeline
+- **OCR Support**: Handles image-based PDFs with Tesseract OCR technology
 - **Text Chunking**: Documents are intelligently split into semantic chunks with overlap
 - **Vector Embeddings**: Uses sentence-transformers for high-quality semantic embeddings
 - **Persistent Storage**: ChromaDB vector database with persistent storage
+- **Processing Analytics**: Track processing time, file size, page count, and extraction methods
 
 ### 🔍 Intelligent Question Answering  
 - **Semantic Search**: Find relevant content using vector similarity search
+- **Streaming Responses**: Real-time LLM responses with typing indicators
 - **Source Attribution**: See exactly which documents contributed to each answer
 - **Context-Aware Responses**: LLM receives relevant document chunks as context
 - **Graceful Fallback**: Provides general knowledge answers when no relevant content found
+- **Performance Tracking**: Monitor response times, prompt/response lengths, and success rates
 
 ### 🎨 Modern Web Interface
-- **Beautiful UI**: Fire-themed modern interface with collapsible sidebar
-- **Real-time Chat**: Interactive chat interface with message history
+- **Beautiful UI**: Fire-themed modern interface with realistic flame animations
+- **Tabbed Sidebar**: Organized upload and document management interface
+- **Real-time Chat**: Interactive chat interface with streaming responses
 - **Processing Status**: Visual indicators showing which PDFs have been processed
-- **Responsive Design**: Works on desktop and mobile devices
+- **Responsive Design**: Scalable card-based layout for growing document collections
+- **Search & Filter**: Find and filter documents by status and filename
 
 ### 🛠 Developer Features
 - **REST API**: Complete Flask-based API for all functionality
+- **Swagger Documentation**: Interactive API documentation at `/swagger/`
 - **Admin Tools**: Flush and reprocess endpoints for document management
 - **Docker Compose**: One-command deployment with all services
 - **Database Migration**: Automatic schema updates
+- **Analytics Dashboard**: Comprehensive system and usage analytics
 
 ## 🚀 Tech Stack
 
-- **Backend:** Python (Flask, SQLAlchemy)
-- **LLM:** Ollama (Llama3) - runs locally
+- **Backend:** Python (Flask, SQLAlchemy, Flasgger)
+- **LLM:** Ollama (Llama3) - runs locally with streaming support
 - **Embeddings:** Sentence Transformers (all-MiniLM-L6-v2)
 - **Vector DB:** ChromaDB for semantic search
-- **Database:** PostgreSQL for metadata
-- **Frontend:** React.js with modern styling
-- **PDF Processing:** pdfplumber for text extraction
-- **Containerization:** Docker, Docker Compose
+- **Database:** PostgreSQL for metadata and analytics
+- **Frontend:** React.js with modern styling and real-time features
+- **PDF Processing:** pdfplumber + Tesseract OCR for comprehensive text extraction
+- **Analytics:** psutil for system monitoring and performance tracking
+- **Containerization:** Docker, Docker Compose with health checks
 
 ## 🚀 Getting Started
 
@@ -66,6 +75,7 @@
 3. **Access the application**
    - **Frontend:** http://localhost:3000
    - **Backend API:** http://localhost:5000
+   - **Swagger API Docs:** http://localhost:5000/swagger/
    - **Database:** localhost:5432 (postgres/postgres)
 
 ### First Steps
@@ -127,25 +137,52 @@ RAGnarok/
 └── README.md
 ```
 
-## 🔌 API Endpoints
+## 🔌 API Documentation
 
-### Document Management
-- `POST /api/upload` - Upload and process PDF files
-- `GET /api/pdfs` - List all uploaded documents with status
+### Swagger Documentation
+Interactive API documentation is available at **http://localhost:5000/swagger/** when the application is running.
+
+### Core API Endpoints
+
+#### Document Management
+- `POST /api/upload` - Upload and process PDF files (with file size validation)
+- `GET /api/pdfs` - List all uploaded documents with pagination and status
+- `GET /api/pdfs/{id}/status` - Get processing status for specific PDF
 - `GET /api/test` - Health check endpoint
 
-### Chat & RAG
-- `POST /api/llm` - Send questions and get RAG-enhanced responses
+#### Chat & RAG
+- `POST /api/llm` - Send questions and get streaming RAG-enhanced responses
   ```json
   {
     "prompt": "Your question here",
     "use_rag": true  // optional, defaults to true
   }
   ```
+  Returns: Server-Sent Events (SSE) stream for real-time responses
 
-### Admin Tools
-- `GET /api/admin/flush` - Clear all documents and embeddings
+#### Analytics
+- `GET /api/analytics/overview` - Get comprehensive system analytics
+- `GET /api/analytics/pdf/{id}` - Get detailed analytics for specific PDF
+
+#### Admin Tools
+- `GET /api/admin/flush` - Clear all documents, embeddings, and analytics
 - `POST /api/admin/reprocess` - Reprocess failed/unprocessed PDFs
+
+### API Features
+- **Streaming Responses**: Real-time LLM output via Server-Sent Events
+- **Pagination**: Efficient handling of large document collections
+- **Analytics Tracking**: Comprehensive performance and usage metrics
+- **Error Handling**: Detailed error responses with proper HTTP status codes
+- **File Validation**: Size limits and type checking for uploads
+
+## 📊 Component Documentation
+
+Detailed React component documentation is available in [`frontend/src/components/README.md`](frontend/src/components/README.md), covering:
+- Component architecture and design principles
+- State management patterns
+- Performance optimizations
+- Testing strategies
+- Development guidelines
 
 ## 🛠 Troubleshooting
 
@@ -190,21 +227,28 @@ docker-compose down -v && docker-compose up --build
 ## ✅ Implementation Status
 
 - ✅ **PDF Ingestion**: Automatic text extraction and processing
+- ✅ **OCR Support**: Tesseract OCR for image-based PDFs
 - ✅ **RAG Pipeline**: Vector embeddings with ChromaDB semantic search  
-- ✅ **LLM Integration**: Ollama/Llama3 with context-aware responses
+- ✅ **LLM Integration**: Ollama/Llama3 with streaming responses
 - ✅ **Web UI**: Modern React interface with real-time chat
 - ✅ **Source Attribution**: Document provenance in all responses
 - ✅ **Persistent Storage**: Vector DB and metadata persistence
-- ✅ **Docker Deployment**: One-command multi-service setup
+- ✅ **Docker Deployment**: One-command multi-service setup with health checks
 - ✅ **Admin Tools**: Document management and system maintenance
+- ✅ **Analytics Dashboard**: Comprehensive performance and usage tracking
+- ✅ **API Documentation**: Interactive Swagger documentation
+- ✅ **Streaming Responses**: Real-time LLM output with typing indicators
+- ✅ **Background Processing**: Asynchronous PDF processing
+- ✅ **Component Documentation**: Detailed React component guides
 
 ### Future Enhancements
-- 🔄 **Image Processing**: OCR for image-based PDFs
 - 🔄 **Multi-format Support**: Word docs, text files, web pages
 - 🔄 **User Authentication**: Multi-user document isolation
 - 🔄 **Advanced Search**: Filtering, metadata search, faceted queries
 - 🔄 **Cloud Deployment**: Kubernetes configs and cloud-native features
-- 🔄 **Performance Optimization**: Caching, async processing, load balancing
+- 🔄 **Performance Optimization**: Caching, load balancing, auto-scaling
+- 🔄 **ML Enhancements**: Custom embeddings, fine-tuned models
+- 🔄 **Data Export**: Analytics dashboards, usage reports
 
 ## 🤝 Contributing
 
