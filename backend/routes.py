@@ -5,11 +5,12 @@ import time
 import json
 import psutil
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify, current_app, Response
+from flask import Blueprint, request, jsonify, current_app, Response, stream_with_context
 from werkzeug.utils import secure_filename
 from flasgger import swag_from
 from models import db, PDF, LLMInteraction, SystemMetrics, UserAnalytics
 from rag_service import RAGService
+from requests.exceptions import Timeout
 
 bp = Blueprint("api", __name__)
 
@@ -395,180 +396,43 @@ def test_api():
     return {"message": "Backend is working!"}, 200
 
 
-@bp.route("/api/llm", methods=["POST"])
-@swag_from({
-    'tags': ['chat'],
-    'summary': 'Interact with LLM using RAG',
-    'description': 'Send a prompt to the LLM with optional RAG context from uploaded documents. Returns a streaming response.',
-    'parameters': [{
-        'name': 'body',
-        'in': 'body',
-        'required': True,
-        'schema': {'$ref': '#/definitions/LLMRequest'}
-    }],
-    'responses': {
-        200: {
-            'description': 'Streaming LLM response',
-            'content': {
-                'text/event-stream': {
-                    'schema': {
-                        'type': 'string',
-                        'description': 'Server-Sent Events stream with LLM response chunks'
-                    }
-                }
-            }
-        },
-        400: {'description': 'Bad request'},
-        500: {'description': 'Internal server error'}
-    }
-})
+@bp.route('/api/llm', methods=['POST'])
 def llm_interact():
-    """Handle LLM interactions with optional RAG context and streaming response."""
-    # Constants
-    SIMILARITY_THRESHOLD = 0.3
-    MAX_CONTEXT_CHUNKS = 5
-    REQUEST_TIMEOUT = 120
-    
-    start_time = datetime.utcnow()
-    data = request.get_json()
-    user_prompt = data.get("prompt", "")
-    use_rag = data.get("use_rag", True)  # Default to using RAG
-    
-    # Analytics tracking
-    prompt_length = len(user_prompt)
-    context_found = False
-    context_length = 0
-    response_length = 0
-    success = True
-    error_message = None
-
-    # Get relevant context from uploaded documents
-    context = ""
-    sources_used = []
-
-    if use_rag:
-        try:
-            relevant_chunks = rag_service.search_similar_chunks(
-                user_prompt, n_results=MAX_CONTEXT_CHUNKS
-            )
-            if relevant_chunks:
-                context_parts = []
-                for chunk in relevant_chunks:
-                    # Only use chunks with decent similarity
-                    if chunk["similarity"] > SIMILARITY_THRESHOLD:
-                        context_parts.append(chunk["content"])
-                        filename = chunk["metadata"]["filename"]
-                        if filename not in sources_used:
-                            sources_used.append(filename)
-
-                if context_parts:
-                    context = "\n\n".join(context_parts)
-                    context_found = True
-                    context_length = len(context)
-        except Exception as e:
-            print(f"RAG search error: {e}")
-
-    # Construct the enhanced prompt
-    if context:
-        enhanced_prompt = (
-            "You are a helpful AI assistant. Use the following context from "
-            "uploaded documents to answer the user's question. If the context "
-            "doesn't contain relevant information, you can provide a general "
-            "answer but mention that you're drawing from general knowledge "
-            "rather than the uploaded documents.\n\n"
-            f"Context from uploaded documents:\n{context}\n\n"
-            f"User question: {user_prompt}\n\n"
-            "Answer:"
-        )
-    else:
-        enhanced_prompt = (
-            "You are a helpful AI assistant. The user has asked a question, "
-            "but no relevant context was found in uploaded documents. Please "
-            "provide a helpful answer based on your general knowledge, and "
-            "mention that you're not drawing from any uploaded documents.\n\n"
-            f"User question: {user_prompt}\n\n"
-            "Answer:"
-        )
-
-    # Prepare Ollama request for streaming
-    ollama_url = f"{current_app.config['OLLAMA_URL']}/api/generate"
-    payload = {
-        "model": current_app.config['OLLAMA_MODEL'],
-        "prompt": enhanced_prompt,
-        "stream": True  # Enable streaming
-    }
-
-    def generate_stream():
-        """Generator function for streaming response."""
-        nonlocal response_length, success, error_message
-        full_response = ""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '')
         
-        try:
-            # Make request to Ollama with streaming
-            response = requests.post(
-                ollama_url, 
-                json=payload, 
-                timeout=REQUEST_TIMEOUT, 
-                stream=True
-            )
-            response.raise_for_status()
-            
-            # Send initial metadata
-            yield f"data: {json.dumps({'type': 'start', 'sources_used': sources_used, 'context_found': context_found, 'rag_enabled': use_rag})}\n\n"
-            
-            # Process streaming response
-            for line in response.iter_lines():
-                if line:
-                    chunk = line.decode("utf-8")
-                    try:
-                        obj = json.loads(chunk)
-                        chunk_text = obj.get("response", "")
-                        if chunk_text:
-                            full_response += chunk_text
-                            yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_text})}\n\n"
-                        
-                        # Check if this is the final chunk
-                        if obj.get("done", False):
-                            response_length = len(full_response)
-                            yield f"data: {json.dumps({'type': 'done', 'total_length': response_length})}\n\n"
-                            break
-                            
-                    except json.JSONDecodeError as e:
-                        print(f"Warning: Failed to parse JSON chunk: {e}")
-                        print(f"Problematic chunk: {chunk[:100]}...")
-                        continue
-                    except Exception as e:
-                        print(f"Warning: Unexpected error processing chunk: {e}")
-                        continue
-                        
-        except Exception as e:
-            success = False
-            error_message = str(e)
-            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
-        
-        finally:
-            # Record analytics
-            end_time = datetime.utcnow()
-            response_time = (end_time - start_time).total_seconds()
-            
+        ollama_url = "http://ollama:11434/api/generate"
+        payload = {
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": True,
+            "timeout": 180  # 3 minutes timeout
+        }
+
+        def generate_stream():
             try:
-                interaction = LLMInteraction(
-                    prompt_length=prompt_length,
-                    use_rag=use_rag,
-                    context_found=context_found,
-                    context_length=context_length if context_found else None,
-                    response_length=response_length if response_length > 0 else None,
-                    response_time=response_time,
-                    model_used=current_app.config['OLLAMA_MODEL'],
-                    success=success,
-                    error_message=error_message
-                )
-                db.session.add(interaction)
-                db.session.commit()
-            except Exception as analytics_error:
-                print(f"Failed to record LLM analytics: {analytics_error}")
+                with requests.post(ollama_url, json=payload, stream=True, timeout=180) as response:
+                    if response.status_code != 200:
+                        yield f"data: {json.dumps({'error': 'Error from LLM service'})}\n\n"
+                        return
 
-    return Response(generate_stream(), mimetype='text/event-stream')
+                    for line in response.iter_lines():
+                        if line:
+                            yield f"data: {line.decode('utf-8')}\n\n"
+                            
+            except Timeout:
+                yield f"data: {json.dumps({'error': 'Request timed out'})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+        return Response(
+            stream_with_context(generate_stream()),
+            mimetype='text/event-stream'
+        )
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @bp.route("/api/analytics/overview", methods=["GET"])

@@ -166,7 +166,7 @@ export function HomePage() {
                                             borderTopRightRadius: "8px"
                                         }}
                                     >
-                                        📚 Documents ({activeTab === 'pdfs' ? 'Active' : ''})
+                                        📚 Documents
                                     </button>
                                 </div>
 

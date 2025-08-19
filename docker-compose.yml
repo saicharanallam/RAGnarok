@@ -16,18 +16,18 @@ services:
       - DB_PASSWORD=postgres
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=llama3
+      - GUNICORN_TIMEOUT=300
+      - WORKER_TIMEOUT=300
     depends_on:
-      db:
-        condition: service_healthy
-      ollama:
-        condition: service_healthy
+      - db
+      - ollama
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/test"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    command: /bin/sh -c "python init_db.py && python migrate_db.py && gunicorn -b 0.0.0.0:5000 --timeout 120 app:app"
+    command: /bin/sh -c "python init_db.py && python migrate_db.py && gunicorn -b 0.0.0.0:5000 --timeout 300 --workers 2 --threads 4 app:app"
 
   frontend:
     build: ./frontend
@@ -37,8 +37,7 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -64,37 +63,17 @@ services:
       start_period: 30s
 
   ollama:
-    image: ollama/ollama
+    image: ollama/ollama:latest
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
-    command: |
-      /bin/bash -c "
-      # Start Ollama in the background
-      /bin/ollama serve &
-      
-      # Wait for Ollama to be ready
-      sleep 10
-      
-      # Pull the llama3 model if it doesn't exist
-      until /bin/ollama list | grep -q llama3; do
-        echo 'Pulling llama3 model...'
-        /bin/ollama pull llama3
-        sleep 5
-      done
-      
-      echo 'Ollama is ready with llama3 model'
-      
-      # Keep the container running
-      wait
-      "
+      retries: 3
+      start_period: 30s
 
 volumes:
   pgdata:
