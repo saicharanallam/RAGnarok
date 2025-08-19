@@ -31,4 +31,6 @@ npm-debug.log*
 .DS_Store
 
 # Postgres
+
 pgdata/
+backend/uploads/**
