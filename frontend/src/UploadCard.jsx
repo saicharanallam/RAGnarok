@@ -1,13 +1,10 @@
 import React, { useRef, useState } from "react";
 
 export default function UploadCard({ onUploadSuccess }) {
-  const [expanded, setExpanded] = useState(true);
   const [pdfFile, setPdfFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
   const fileInputRef = useRef();
-
-  const cardWidth = 500; // Fixed width for both states
 
   const handleFileChange = (e) => {
     setPdfFile(e.target.files[0]);
@@ -34,16 +31,19 @@ export default function UploadCard({ onUploadSuccess }) {
         method: "POST",
         body: formData,
       });
+      
+      const data = await res.json();
+      
       if (res.ok) {
-        setUploadStatus("Upload successful!");
+        setUploadStatus(`✅ Upload successful! Processing started for "${data.filename}". Check the Documents tab for status updates.`);
         setPdfFile(null);
-        if (onUploadSuccess) onUploadSuccess(); // <--- notify parent
+        if (onUploadSuccess) onUploadSuccess(); // Notify parent to switch tabs
       } else {
-        const data = await res.json();
-        setUploadStatus(data.error || "Upload failed.");
+        setUploadStatus(`❌ Upload failed: ${data.error || "Unknown error"}`);
       }
     } catch (err) {
-      setUploadStatus("Upload failed.");
+      setUploadStatus(`❌ Upload failed: ${err.message || 'Network error'}`);
+      console.error("Upload error:", err);
     }
     setUploading(false);
   };
@@ -52,69 +52,72 @@ export default function UploadCard({ onUploadSuccess }) {
     fileInputRef.current.click();
   };
 
-  // Collapsed view
-  if (!expanded) {
-    return (
-      <div
-        style={{
-          width: cardWidth,
-          margin: "24px auto",
-          borderRadius: 12,
-          background: "#182635",
-          boxShadow: "0 2px 16px #0008",
-          padding: 24,
-          cursor: "pointer",
-          transition: "all 0.2s",
-          textAlign: "center",
-        }}
-        onClick={() => setExpanded(true)}
-      >
-        <h3 style={{ color: "#FFB347", margin: 0 }}>
-          Upload PDF
-        </h3>
-        <div style={{ color: "#FF6600", marginTop: 8, fontSize: 14 }}>
-          Click to expand
-        </div>
-      </div>
-    );
-  }
+  const clearStatus = () => {
+    setUploadStatus("");
+  };
 
-  // Expanded view
   return (
     <div
       style={{
-        width: cardWidth,
-        margin: "24px auto",
-        borderRadius: 12,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
         background: "#182635",
-        boxShadow: "0 2px 16px #0008",
-        padding: 24,
-        cursor: "default",
-        transition: "all 0.2s"
+        borderRadius: 8,
+        overflow: "hidden"
       }}
     >
-      <h3
-        style={{ color: "#FFB347", margin: 0, marginBottom: 20, cursor: "pointer" }}
-        onClick={() => setExpanded(false)}
-        title="Click to collapse"
-      >
-        Upload PDF
-      </h3>
-      <div>
+      {/* Header */}
+      <div style={{
+        padding: "20px 20px 16px 20px",
+        borderBottom: "1px solid #2A3A4A",
+        background: "#0F1A23"
+      }}>
+        <h3 style={{
+          color: "#FFB347",
+          margin: "0 0 8px 0",
+          fontSize: "18px",
+          fontWeight: "600"
+        }}>
+          📤 Upload Documents
+        </h3>
+        <p style={{
+          color: "#8BA0B8",
+          margin: 0,
+          fontSize: "13px",
+          lineHeight: "1.4"
+        }}>
+          Upload PDF documents to analyze with AI. Supports text-based and image-based PDFs.
+        </p>
+      </div>
+
+      {/* Content */}
+      <div style={{ 
+        flex: 1, 
+        padding: "24px 20px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center"
+      }}>
+        {/* Drop Zone */}
         <div
           onClick={handleDropzoneClick}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           style={{
             border: "2px dashed #FFB347",
-            borderRadius: 8,
-            padding: 32,
+            borderRadius: "12px",
+            padding: "40px 24px",
             textAlign: "center",
-            marginBottom: 24,
-            marginTop: 20,
-            background: pdfFile ? "#fff3e0" : "#222c3a",
-            color: "#FF6600",
-            cursor: "pointer"
+            marginBottom: "24px",
+            background: pdfFile ? "#1a2a3a" : "#0F1A23",
+            color: pdfFile ? "#FFB347" : "#8BA0B8",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            borderColor: pdfFile ? "#FF6600" : "#FFB347",
+            position: "relative",
+            overflow: "hidden"
           }}
         >
           <input
@@ -125,35 +128,171 @@ export default function UploadCard({ onUploadSuccess }) {
             onChange={handleFileChange}
             ref={fileInputRef}
           />
-          <strong>Upload PDF</strong> or drag & drop here
-          {pdfFile && <div style={{ marginTop: 16, color: "#222" }}>Selected: {pdfFile.name}</div>}
+          
+          {/* Upload Icon */}
+          <div style={{
+            fontSize: "48px",
+            marginBottom: "16px",
+            opacity: 0.8
+          }}>
+            📄
+          </div>
+          
+          <div style={{
+            fontSize: "16px",
+            fontWeight: "600",
+            marginBottom: "8px",
+            color: pdfFile ? "#FFB347" : "#FFB347"
+          }}>
+            {pdfFile ? "File Selected!" : "Upload PDF Document"}
+          </div>
+          
+          <div style={{
+            fontSize: "14px",
+            opacity: 0.8,
+            marginBottom: "8px"
+          }}>
+            {pdfFile ? "Ready to upload" : "Click to browse or drag & drop"}
+          </div>
+          
+          {pdfFile && (
+            <div style={{
+              marginTop: "16px",
+              padding: "12px",
+              background: "#182635",
+              borderRadius: "8px",
+              border: "1px solid #2A3A4A",
+              color: "#FFB347",
+              fontSize: "13px",
+              fontWeight: "500"
+            }}>
+              📎 {pdfFile.name}
+              <br />
+              <span style={{ fontSize: "11px", opacity: 0.7 }}>
+                Size: {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB
+              </span>
+            </div>
+          )}
+          
+          {/* Drag & Drop Hint */}
+          <div style={{
+            position: "absolute",
+            bottom: "12px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            fontSize: "11px",
+            opacity: 0.5,
+            color: "#8BA0B8"
+          }}>
+            Supports PDF files up to 50MB
+          </div>
         </div>
+
+        {/* Upload Button */}
         {pdfFile && (
           <button
             onClick={handleUpload}
             disabled={uploading}
             style={{
-              marginBottom: 24,
-              padding: "10px 24px",
-              borderRadius: 4,
+              padding: "14px 28px",
+              borderRadius: "8px",
               border: "none",
-              background: "linear-gradient(90deg, #FFB347 0%, #FF6600 100%)",
+              background: uploading 
+                ? "linear-gradient(90deg, #666 0%, #888 100%)" 
+                : "linear-gradient(90deg, #FFB347 0%, #FF6600 100%)",
               color: "#fff",
-              fontWeight: "bold",
-              fontSize: 16,
+              fontWeight: "600",
+              fontSize: "16px",
               cursor: uploading ? "not-allowed" : "pointer",
-              boxShadow: "0 2px 8px #FFB34744",
-              transition: "background 0.2s",
+              boxShadow: uploading 
+                ? "0 2px 8px #66644" 
+                : "0 4px 16px #FFB34766",
+              transition: "all 0.2s ease",
+              width: "100%",
+              marginBottom: "20px"
             }}
           >
-            {uploading ? "Uploading..." : "Upload"}
+            {uploading ? (
+              <span>
+                🔄 Uploading... Please wait
+              </span>
+            ) : (
+              <span>
+                🚀 Upload & Process Document
+              </span>
+            )}
           </button>
         )}
+
+        {/* Status Messages */}
         {uploadStatus && (
-          <div style={{ marginBottom: 24, color: uploadStatus.includes("success") ? "#FF6600" : "red" }}>
+          <div style={{
+            padding: "16px",
+            borderRadius: "8px",
+            background: uploadStatus.includes("✅") 
+              ? "#1a3a1a" 
+              : uploadStatus.includes("❌") 
+                ? "#3a1a1a" 
+                : "#1a2a3a",
+            border: "1px solid",
+            borderColor: uploadStatus.includes("✅") 
+              ? "#4CAF50" 
+              : uploadStatus.includes("❌") 
+                ? "#F44336" 
+                : "#2A3A4A",
+            color: uploadStatus.includes("✅") 
+              ? "#4CAF50" 
+              : uploadStatus.includes("❌") 
+                ? "#F44336" 
+                : "#FFB347",
+            fontSize: "14px",
+            lineHeight: "1.4",
+            position: "relative"
+          }}>
             {uploadStatus}
+            <button
+              onClick={clearStatus}
+              style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                background: "none",
+                border: "none",
+                color: "inherit",
+                cursor: "pointer",
+                fontSize: "16px",
+                opacity: 0.7,
+                padding: "4px"
+              }}
+              title="Clear message"
+            >
+              ×
+            </button>
           </div>
         )}
+
+        {/* Info Section */}
+        <div style={{
+          marginTop: "auto",
+          padding: "16px",
+          background: "#0F1A23",
+          borderRadius: "8px",
+          border: "1px solid #2A3A4A"
+        }}>
+          <div style={{
+            color: "#8BA0B8",
+            fontSize: "12px",
+            lineHeight: "1.4"
+          }}>
+            <div style={{ marginBottom: "8px" }}>
+              <strong>💡 Tips:</strong>
+            </div>
+            <div>• Text-based PDFs process faster</div>
+            <div>• Image-based PDFs use OCR for text extraction</div>
+            <div>• Processing happens in the background</div>
+            <div>• Check Documents tab for status updates</div>
+          </div>
+        </div>
       </div>
     </div>
   );
