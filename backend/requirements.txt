@@ -8,3 +8,9 @@ chromadb
 pdfplumber
 numpy
 scikit-learn
+pytesseract
+Pillow
+pdf2image
+psutil
+flasgger
+flask-swagger-ui
