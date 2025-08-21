@@ -1,14 +1,14 @@
-version: "3.7"
+version: "3.3"
 services:
-  backend:
-    build: ./backend
+  main-api:
+    build: ./main-api
     volumes:
-      - ./backend:/app
+      - ./main-api:/app
+      - shared_uploads:/app/uploads
       - chroma_data:/app/chroma_db
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
-      - FLASK_ENV=development
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=ragnarok
@@ -16,18 +16,43 @@ services:
       - DB_PASSWORD=postgres
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=llama3
-      - GUNICORN_TIMEOUT=300
-      - WORKER_TIMEOUT=300
+      - PDF_SERVICE_URL=http://document-processor:8001
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_PERSIST_DIRECTORY=/app/chroma_db
     depends_on:
       - db
+      - redis
       - ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/test"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/test"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
-    command: /bin/sh -c "python init_db.py && python migrate_db.py && gunicorn -b 0.0.0.0:5000 --timeout 300 --workers 2 --threads 4 app:app"
+
+  document-processor:
+    build: ./document-processor
+    volumes:
+      - ./document-processor:/app
+      - shared_uploads:/app/uploads  # Shared with main backend
+      - chroma_data:/app/chroma_db   # Shared ChromaDB storage
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=ragnarok
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - CHROMA_PERSIST_DIRECTORY=/app/chroma_db
+      - UPLOAD_FOLDER=/app/uploads
+    depends_on:
+      - db
+      - main-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
     build: ./frontend
@@ -36,14 +61,15 @@ services:
       - /app/node_modules
     ports:
       - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8000
     depends_on:
-      - backend
+      - main-api
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
 
   db:
     image: postgres:14
@@ -60,7 +86,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ollama:
     image: ollama/ollama:latest
@@ -73,9 +110,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
 
 volumes:
   pgdata:
   ollama_data:
   chroma_data:
+  redis_data:
+  shared_uploads:

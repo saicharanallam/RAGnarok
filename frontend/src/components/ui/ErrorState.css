@@ -1,0 +1,67 @@
+.error-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-state__content {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.error-state__icon {
+  font-size: 3rem;
+  opacity: 0.7;
+  margin-bottom: var(--spacing-sm);
+}
+
+.error-state__title {
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.error-state__message {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin: 0;
+  text-align: center;
+}
+
+/* Variants */
+.error-state--network {
+  border-left: 4px solid var(--error-color);
+}
+
+.error-state--network .error-state__icon {
+  color: var(--error-color);
+}
+
+.error-state--empty {
+  border-left: 4px solid var(--text-muted);
+}
+
+.error-state--empty .error-state__icon {
+  color: var(--text-muted);
+}
+
+.error-state--inline {
+  padding: var(--spacing-lg);
+  min-height: 120px;
+}
+
+.error-state--inline .error-state__icon {
+  font-size: 2rem;
+}
+
+.error-state--inline .error-state__title {
+  font-size: var(--font-size-md);
+}

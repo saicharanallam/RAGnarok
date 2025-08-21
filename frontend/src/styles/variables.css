@@ -1,0 +1,171 @@
+:root {
+  /* Colors - Light Theme */
+  --primary-color: #ff6b35;
+  --primary-dark: #e55a2b;
+  --primary-light: #ffebe5;
+  --secondary-color: #4a90e2;
+  --secondary-dark: #357abd;
+  --secondary-light: #e8f4fd;
+  
+  /* RAGnarok Brand Colors */
+  --brand-orange: #ff6b35;
+  --brand-red: #dc2626;
+  --brand-yellow: #fbbf24;
+  --brand-blue: #3b82f6;
+  
+  /* Neutral Colors - Light */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  
+  /* Background Colors - Light */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --card-bg: #ffffff;
+  --hover-bg: #f3f4f6;
+  
+  /* Border & Divider - Light */
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+  --divider-color: #e5e7eb;
+  
+  /* Status Colors */
+  --success-color: #10b981;
+  --success-bg: #ecfdf5;
+  --success-text: #065f46;
+  
+  --error-color: #ef4444;
+  --error-bg: #fef2f2;
+  --error-text: #991b1b;
+  
+  --warning-color: #f59e0b;
+  --warning-bg: #fffbeb;
+  --warning-text: #92400e;
+  
+  --info-color: #3b82f6;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  
+  /* Z-Index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  /* Neutral Colors - Dark */
+  --text-primary-dark: #f9fafb;
+  --text-secondary-dark: #d1d5db;
+  --text-muted-dark: #9ca3af;
+  
+  /* Background Colors - Dark */
+  --bg-primary-dark: #111827;
+  --bg-secondary-dark: #1f2937;
+  --bg-tertiary-dark: #374151;
+  --card-bg-dark: #1f2937;
+  --hover-bg-dark: #374151;
+  
+  /* Border & Divider - Dark */
+  --border-color-dark: #374151;
+  --border-light-dark: #4b5563;
+  --divider-color-dark: #374151;
+  
+  /* Secondary backgrounds for dark theme */
+  --secondary-bg-dark: #374151;
+  
+  /* Override light theme variables for dark mode */
+  --text-primary: var(--text-primary-dark);
+  --text-secondary: var(--text-secondary-dark);
+  --text-muted: var(--text-muted-dark);
+  
+  --bg-primary: var(--bg-primary-dark);
+  --bg-secondary: var(--bg-secondary-dark);
+  --bg-tertiary: var(--bg-tertiary-dark);
+  --card-bg: var(--card-bg-dark);
+  --hover-bg: var(--hover-bg-dark);
+  
+  --border-color: var(--border-color-dark);
+  --border-light: var(--border-light-dark);
+  --divider-color: var(--divider-color-dark);
+  
+  --secondary-bg: var(--secondary-bg-dark);
+  
+  /* Adjust shadows for dark theme */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Global transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Focus styles */
+*:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+[data-theme="dark"] ::selection {
+  background: var(--primary-color);
+  color: white;
+}

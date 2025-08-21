@@ -1,36 +1,307 @@
-# Python
+# RAGnarok - Comprehensive .gitignore
+
+# ===== UPLOADS & USER DATA =====
+uploads/
+*/uploads/
+**/uploads/**
+*.pdf
+*.PDF
+*.doc
+*.docx
+*.txt
+
+# ===== DATABASE & VOLUMES =====
+# ChromaDB data
+chroma_db/
+*/chroma_db/
+**/chroma_db/**
+*.chroma
+*.sqlite
+*.sqlite3
+
+# PostgreSQL data
+pgdata/
+postgres_data/
+db_data/
+
+# Redis data
+redis_data/
+
+# Ollama models
+ollama_data/
+.ollama/
+
+# ===== ENVIRONMENT & SECRETS =====
+.env
+.env.local
+.env.production
+.env.development
+config.local.py
+secrets.py
+.secrets/
+
+# ===== DOCKER & CONTAINERS =====
+# Docker volumes
+**/volumes/**
+docker-volumes/
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# ===== PYTHON =====
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-env/
-venv/
-ENV/
-*.env
+*.py[cod]
+*$py.class
+*.so
 
-# Node
-node_modules/
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+ragnarok-env/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ===== NODE.JS / FRONTEND =====
+# Dependencies
+node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-# React
-*.log
-*.lock
-*.cache
-*.tsbuildinfo
-
-# Docker
+# Runtime data
+pids
 *.pid
-*.db
+*.seed
+*.pid.lock
 
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# ===== LOGS =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===== TEMPORARY FILES =====
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ===== BACKUP FILES =====
+# Backup directories
+*-backup/
+backup-*/
+*.backup
+*.bak
+*.old
+
+# ===== IDE & EDITORS =====
 # VSCode
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# Misc
-.DS_Store
+# PyCharm
+.idea/
 
-# Postgres
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
 
-pgdata/
-backend/uploads/**
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===== TESTING =====
+# Test outputs
+test-results/
+test-reports/
+.coverage
+htmlcov/
+
+# ===== DEPLOYMENT =====
+# Production builds
+build/
+dist/
+
+# Deployment configs (keep templates)
+docker-compose.prod.yml
+kubernetes/
+k8s/
+helm/
+
+# ===== RAGNAROK SPECIFIC =====
+# Processed documents cache
+.document_cache/
+.embeddings_cache/
+
+# Model downloads
+models/
+*.model
+*.bin
+
+# Analytics data
+analytics_data/
+metrics/
+
+# User sessions
+sessions/
+.sessions/
+
+# Custom configurations
+local_config.py
+user_settings.json
+
+# Development utilities
+dev_tools/
+debug_output/
+profiling_results/
+
+# ===== KEEP THESE FILES =====
+# Important: These should NOT be ignored
+!README.md
+!README-*.md
+!requirements.txt
+!package.json
+!docker-compose.yml
+!Dockerfile
+!Makefile
+!.gitkeep
+!.env.example
+!.env.template

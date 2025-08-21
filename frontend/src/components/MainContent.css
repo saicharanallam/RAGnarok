@@ -1,0 +1,160 @@
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px);
+  overflow: hidden;
+}
+
+.main-content__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  gap: var(--spacing-lg);
+}
+
+.main-content__stats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  min-width: 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--brand-red));
+}
+
+.stat-item--warning {
+  background: var(--warning-bg);
+  border-color: var(--warning-color);
+}
+
+.stat-item--error {
+  background: var(--error-bg);
+  border-color: var(--error-color);
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.stat-item--warning .stat-number {
+  color: var(--warning-color);
+}
+
+.stat-item--error .stat-number {
+  color: var(--error-color);
+}
+
+.stat-item--loading {
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.stat-item--loading .loading-spinner--inline {
+  padding: 0;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.main-content__buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.main-content__chat {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .main-content {
+    height: calc(100vh - 60px);
+  }
+  
+  .main-content__actions {
+    padding: var(--spacing-md);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .main-content__stats {
+    justify-content: space-around;
+    gap: var(--spacing-sm);
+  }
+  
+  .stat-item {
+    min-width: 60px;
+    padding: var(--spacing-sm);
+  }
+  
+  .stat-number {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+  
+  .main-content__buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content__stats {
+    gap: var(--spacing-xs);
+  }
+  
+  .stat-item {
+    min-width: 50px;
+    padding: var(--spacing-xs);
+  }
+  
+  .stat-number {
+    font-size: 16px;
+  }
+  
+  .main-content__buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+}
