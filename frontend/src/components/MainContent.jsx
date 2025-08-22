@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import Card from './ui/Card';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
 import LoadingSpinner from './ui/LoadingSpinner';
 import ErrorState from './ui/ErrorState';
 import ChatInterface from './ChatInterface';
 import UploadSection from './UploadSection';
-import DocumentList from './DocumentList';
+import EnhancedDocumentCard from './EnhancedDocumentCard';
+import AdminPanel from './AdminPanel';
+import apiConfig from '../config/api';
 import './MainContent.css';
+import './TabStyles.css';
 
 const MainContent = ({ onNotification }) => {
   const [documents, setDocuments] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isDocumentListOpen, setIsDocumentListOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'documents', 'analytics'
 
   const fetchDocuments = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/pdfs');
+      const response = await apiConfig.get('api/pdfs');
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.pdfs || []);
@@ -54,9 +56,7 @@ const MainContent = ({ onNotification }) => {
 
   const handleDeleteDocument = async (documentId) => {
     try {
-      const response = await fetch(`/api/pdfs/${documentId}`, {
-        method: 'DELETE'
-      });
+      const response = await apiConfig.delete(`api/pdfs/${documentId}`);
       
       if (response.ok) {
         setDocuments(prev => prev.filter(doc => doc.id !== documentId));
@@ -86,88 +86,166 @@ const MainContent = ({ onNotification }) => {
 
   const stats = getDocumentStats();
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
+  const handleQueryDocument = (document) => {
+    setActiveTab('chat');
+    // TODO: Pre-fill chat with document-specific context
+  };
+
   return (
     <div className="main-content">
-      {/* Quick Actions Bar */}
-      <div className="main-content__actions">
-        <div className="main-content__stats">
-          {loading ? (
-            <div className="stat-item stat-item--loading">
-              <LoadingSpinner size="small" className="loading-spinner--inline" />
-              <span className="stat-label">Loading stats...</span>
-            </div>
-          ) : error ? (
-            <div className="stat-item stat-item--error">
-              <span className="stat-number">⚠️</span>
-              <span className="stat-label">Connection Error</span>
-            </div>
-          ) : (
-            <>
-              <div className="stat-item">
-                <span className="stat-number">{stats.total}</span>
-                <span className="stat-label">Documents</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">{stats.processed}</span>
-                <span className="stat-label">Processed</span>
-              </div>
-              {stats.pending > 0 && (
-                <div className="stat-item stat-item--warning">
-                  <span className="stat-number">{stats.pending}</span>
-                  <span className="stat-label">Pending</span>
-                </div>
-              )}
-              {stats.failed > 0 && (
-                <div className="stat-item stat-item--error">
-                  <span className="stat-number">{stats.failed}</span>
-                  <span className="stat-label">Failed</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="main-content__buttons">
-          {error ? (
-            <Button
-              variant="outline"
-              size="small"
-              onClick={fetchDocuments}
-              icon="🔄"
-            >
-              Retry Connection
-            </Button>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                size="small"
-                onClick={() => setIsDocumentListOpen(true)}
-                icon="📄"
-                disabled={loading}
-              >
-                View Documents {!loading && `(${stats.total})`}
-              </Button>
-              <Button
-                variant="primary"
-                size="small"
-                onClick={() => setIsUploadModalOpen(true)}
-                icon="📤"
-                disabled={loading}
-              >
-                Upload PDF
-              </Button>
-            </>
-          )}
-        </div>
+      {/* Tab Navigation */}
+      <div className="main-content__tabs">
+        <button
+          className={`tab-button ${activeTab === 'chat' ? 'active' : ''}`}
+          onClick={() => handleTabChange('chat')}
+        >
+          💬 Chat
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'documents' ? 'active' : ''}`}
+          onClick={() => handleTabChange('documents')}
+        >
+          📄 Documents ({stats.total})
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => handleTabChange('analytics')}
+        >
+          📊 Analytics
+        </button>
       </div>
 
-      {/* Main Chat Interface */}
-      <div className="main-content__chat">
-        <ChatInterface 
-          onNotification={onNotification}
-          documentsAvailable={stats.processed > 0}
-        />
+      {/* Tab Content */}
+      <div className="main-content__tab-content">
+        {/* Chat Tab */}
+        {activeTab === 'chat' && (
+          <div className="tab-content chat-tab">
+            <div className="chat-tab__header">
+              <div className="main-content__stats">
+                {loading ? (
+                  <div className="stat-item stat-item--loading">
+                    <LoadingSpinner size="small" className="loading-spinner--inline" />
+                    <span className="stat-label">Loading stats...</span>
+                  </div>
+                ) : error ? (
+                  <div className="stat-item stat-item--error">
+                    <span className="stat-number">⚠️</span>
+                    <span className="stat-label">Connection Error</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="stat-item">
+                      <span className="stat-number">{stats.total}</span>
+                      <span className="stat-label">Documents</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-number">{stats.processed}</span>
+                      <span className="stat-label">Ready for Chat</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <div className="chat-tab__actions">
+                <Button
+                  variant="primary"
+                  size="small"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  icon="📤"
+                  disabled={loading}
+                >
+                  Upload PDF
+                </Button>
+              </div>
+            </div>
+            
+            <div className="chat-tab__interface">
+              <ChatInterface 
+                onNotification={onNotification}
+                documentsAvailable={stats.processed > 0}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Documents Tab */}
+        {activeTab === 'documents' && (
+          <div className="tab-content documents-tab">
+            <div className="documents-tab__header">
+              <h2>Your Documents</h2>
+              <div className="documents-tab__actions">
+                <Button
+                  variant="outline"
+                  size="small"
+                  onClick={fetchDocuments}
+                  icon="🔄"
+                  disabled={loading}
+                >
+                  Refresh
+                </Button>
+                <Button
+                  variant="primary"
+                  size="small"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  icon="📤"
+                  disabled={loading}
+                >
+                  Upload PDF
+                </Button>
+              </div>
+            </div>
+
+            {loading && <LoadingSpinner />}
+            
+            {error && (
+              <ErrorState
+                title={error.title}
+                message={error.message}
+                type={error.type}
+                onRetry={fetchDocuments}
+              />
+            )}
+
+            {!loading && !error && (
+              <div className="documents-tab__list">
+                {documents.length === 0 ? (
+                  <div className="documents-empty">
+                    <div className="documents-empty__icon">📄</div>
+                    <h3>No documents uploaded yet</h3>
+                    <p>Upload your first PDF document to get started with RAGnarok!</p>
+                    <Button
+                      variant="primary"
+                      onClick={() => setIsUploadModalOpen(true)}
+                      icon="📤"
+                    >
+                      Upload PDF
+                    </Button>
+                  </div>
+                ) : (
+                  documents.map((document) => (
+                    <EnhancedDocumentCard
+                      key={document.id}
+                      document={document}
+                      onDelete={handleDeleteDocument}
+                      onQuery={handleQueryDocument}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="tab-content analytics-tab">
+            <AdminPanel onNotification={onNotification} />
+          </div>
+        )}
       </div>
 
       {/* Upload Modal */}
@@ -179,22 +257,6 @@ const MainContent = ({ onNotification }) => {
       >
         <UploadSection
           onUploadSuccess={handleUploadSuccess}
-          onNotification={onNotification}
-        />
-      </Modal>
-
-      {/* Document List Modal */}
-      <Modal
-        isOpen={isDocumentListOpen}
-        onClose={() => setIsDocumentListOpen(false)}
-        title="Your Documents"
-        size="large"
-      >
-        <DocumentList
-          documents={documents}
-          onDelete={handleDeleteDocument}
-          onRefresh={fetchDocuments}
-          loading={loading}
           onNotification={onNotification}
         />
       </Modal>

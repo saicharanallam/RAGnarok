@@ -4,9 +4,11 @@ import Button from './ui/Button';
 import Modal from './ui/Modal';
 import LoadingSpinner from './ui/LoadingSpinner';
 import ErrorState from './ui/ErrorState';
+import ModelSelector from './ModelSelector';
+import apiConfig from '../config/api';
 import './AdminPanel.css';
 
-const AdminPanel = ({ onNotification }) => {
+const AdminPanel = ({ onNotification, cachedData, isLoading }) => {
   const [analytics, setAnalytics] = useState(null);
   const [systemMetrics, setSystemMetrics] = useState(null);
   const [llmInteractions, setLlmInteractions] = useState([]);
@@ -16,7 +18,7 @@ const AdminPanel = ({ onNotification }) => {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch('/api/analytics/overview');
+      const response = await apiConfig.get('api/analytics/overview');
       if (response.ok) {
         const data = await response.json();
         setAnalytics(data);
@@ -31,7 +33,7 @@ const AdminPanel = ({ onNotification }) => {
 
   const fetchSystemMetrics = async () => {
     try {
-      const response = await fetch('/api/analytics/system');
+      const response = await apiConfig.get('api/analytics/system');
       if (response.ok) {
         const data = await response.json();
         setSystemMetrics(data.metrics);
@@ -46,7 +48,7 @@ const AdminPanel = ({ onNotification }) => {
 
   const fetchLlmInteractions = async () => {
     try {
-      const response = await fetch('/api/analytics/llm-interactions');
+      const response = await apiConfig.get('api/analytics/llm-interactions');
       if (response.ok) {
         const data = await response.json();
         setLlmInteractions(data.interactions || []);
@@ -80,14 +82,17 @@ const AdminPanel = ({ onNotification }) => {
   };
 
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    if (cachedData) {
+      setAnalytics(cachedData);
+      setLoading(false);
+    } else {
+      fetchAllData();
+    }
+  }, [cachedData]);
 
   const handleFlushData = async (type) => {
     try {
-      const response = await fetch(`/api/admin/flush/${type}`, {
-        method: 'DELETE'
-      });
+      const response = await apiConfig.delete(`api/admin/flush/${type}`);
 
       if (response.ok) {
         onNotification({
@@ -154,7 +159,7 @@ const AdminPanel = ({ onNotification }) => {
   return (
     <div className="admin-panel">
       <div className="admin-panel__header">
-        <h1>📊 RAGnarok Analytics</h1>
+        <h1>📊 Analytics & System Overview</h1>
         <Button
           variant="ghost"
           size="small"
@@ -270,31 +275,52 @@ const AdminPanel = ({ onNotification }) => {
             <p>No AI interactions recorded yet.</p>
           </Card>
         ) : (
-          <div className="interactions-list">
-            {llmInteractions.slice(0, 10).map((interaction) => (
-              <Card key={interaction.id} className="interaction-card">
-                <div className="interaction-card__header">
-                  <span className="interaction-card__date">
-                    {formatDate(interaction.timestamp)}
-                  </span>
-                  <span className="interaction-card__duration">
-                    {interaction.response_time?.toFixed(2)}s
-                  </span>
-                </div>
-                <div className="interaction-card__content">
-                  <div className="interaction-card__prompt">
-                    <strong>Prompt:</strong> {interaction.prompt.substring(0, 100)}
-                    {interaction.prompt.length > 100 && '...'}
-                  </div>
-                  <div className="interaction-card__response">
-                    <strong>Response:</strong> {interaction.response.substring(0, 150)}
-                    {interaction.response.length > 150 && '...'}
-                  </div>
-                </div>
-              </Card>
-            ))}
+          <div className="interactions-table-container">
+            <table className="interactions-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Response Time</th>
+                  <th>Prompt</th>
+                  <th>Response</th>
+                </tr>
+              </thead>
+              <tbody>
+                {llmInteractions.slice(0, 10).map((interaction) => (
+                  <tr key={interaction.id} className="interaction-row">
+                    <td className="interaction-timestamp">
+                      {formatDate(interaction.timestamp)}
+                    </td>
+                    <td className="interaction-duration">
+                      {interaction.response_time?.toFixed(2)}s
+                    </td>
+                    <td className="interaction-prompt">
+                      <div className="interaction-text">
+                        {interaction.prompt.length > 80 
+                          ? `${interaction.prompt.substring(0, 80)}...` 
+                          : interaction.prompt
+                        }
+                      </div>
+                    </td>
+                    <td className="interaction-response">
+                      <div className="interaction-text">
+                        {interaction.response.length > 120 
+                          ? `${interaction.response.substring(0, 120)}...` 
+                          : interaction.response
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
+      </div>
+
+      {/* LLM Model Management */}
+      <div className="admin-section">
+        <ModelSelector onNotification={onNotification} />
       </div>
 
       {/* Admin Actions */}

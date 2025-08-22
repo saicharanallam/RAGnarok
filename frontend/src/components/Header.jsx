@@ -3,13 +3,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import Button from './ui/Button';
 import './Header.css';
 
-const Header = ({ currentView, onViewChange, onNotification }) => {
+const Header = () => {
   const { theme, toggleTheme } = useTheme();
-
-  const navItems = [
-    { id: 'chat', label: 'RAG Chat', icon: '🔥' },
-    { id: 'admin', label: 'Analytics', icon: '📊' }
-  ];
 
   return (
     <header className="header">
@@ -22,20 +17,6 @@ const Header = ({ currentView, onViewChange, onNotification }) => {
           </div>
           <span className="header__tagline">AI Document Chat</span>
         </div>
-
-        {/* Navigation */}
-        <nav className="header__nav">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`header__nav-item ${currentView === item.id ? 'header__nav-item--active' : ''}`}
-              onClick={() => onViewChange(item.id)}
-            >
-              <span className="header__nav-icon">{item.icon}</span>
-              <span className="header__nav-label">{item.label}</span>
-            </button>
-          ))}
-        </nav>
 
         {/* Actions */}
         <div className="header__actions">

@@ -8,6 +8,9 @@ import PyPDF2
 from typing import List, Tuple
 from datetime import datetime
 import logging
+import httpx
+import json
+import re
 
 from .rag_service import RAGService
 from .database_client import DatabaseClient
@@ -153,6 +156,67 @@ class PDFProcessor:
         
         return chunks
     
+    async def _generate_summary(self, text: str) -> str:
+        """Generate a summary using the LLM service."""
+        if not text.strip():
+            return "No content available for summary."
+            
+        try:
+            # Use Ollama for summary generation
+            ollama_url = f"{settings.OLLAMA_URL}/api/generate"
+            prompt = f"""Please provide a concise 2-3 sentence summary of the following document content:
+
+{text}
+
+Summary:"""
+            
+            payload = {
+                "model": settings.OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,
+                    "max_tokens": 150
+                }
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(ollama_url, json=payload)
+                if response.status_code == 200:
+                    data = response.json()
+                    summary = data.get("response", "").strip()
+                    return summary if summary else "Summary could not be generated."
+                else:
+                    logger.warning(f"Failed to generate summary: {response.status_code}")
+                    return "Summary generation failed."
+                    
+        except Exception as e:
+            logger.error(f"Error generating summary: {e}")
+            return "Summary could not be generated."
+    
+    async def _extract_key_topics(self, text: str) -> str:
+        """Extract key topics from text using simple keyword analysis."""
+        if not text.strip():
+            return "[]"
+            
+        try:
+            # Simple keyword extraction - could be enhanced with NLP libraries
+            words = re.findall(r'\b[A-Z][a-z]{3,}\b', text)  # Capitalized words 4+ chars
+            word_freq = {}
+            for word in words:
+                if word.lower() not in ['this', 'that', 'with', 'from', 'they', 'have', 'will', 'been', 'were', 'said']:
+                    word_freq[word] = word_freq.get(word, 0) + 1
+            
+            # Get top 5 most frequent meaningful words
+            top_topics = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:5]
+            topics = [topic[0] for topic in top_topics if topic[1] > 1]  # Only words that appear more than once
+            
+            return json.dumps(topics[:5])  # Return as JSON string
+            
+        except Exception as e:
+            logger.error(f"Error extracting topics: {e}")
+            return "[]"
+    
     async def process_pdf_background(self, pdf_id: int, filepath: str, filename: str):
         """Process PDF in background with comprehensive error handling."""
         start_time = datetime.utcnow()
@@ -200,6 +264,11 @@ class PDFProcessor:
             
             logger.info(f"Created {len(chunks)} chunks from {filename}")
             
+            # Generate content analysis
+            content_preview = text[:500] + "..." if len(text) > 500 else text
+            summary = await self._generate_summary(text[:2000])  # Use first 2000 chars for summary
+            key_topics = await self._extract_key_topics(text[:1000])  # Use first 1000 chars for topics
+            
             # Store with embeddings
             success = self.rag_service.store_document_chunks(pdf_id, filename, chunks)
             
@@ -207,14 +276,17 @@ class PDFProcessor:
             processing_duration = (end_time - start_time).total_seconds()
             
             if success:
-                # Mark as completed
+                # Mark as completed with content analysis
                 await self.db_client.update_pdf_completed(
                     pdf_id=pdf_id,
                     chunk_count=len(chunks),
                     extraction_method=extraction_method,
                     processing_end_time=end_time,
                     processing_duration=processing_duration,
-                    text_length=text_length
+                    text_length=text_length,
+                    summary=summary,
+                    key_topics=key_topics,
+                    content_preview=content_preview
                 )
                 logger.info(f"Successfully processed {filename}: {len(chunks)} chunks stored")
             else:

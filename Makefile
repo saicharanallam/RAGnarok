@@ -24,6 +24,9 @@ up: ## Start RAGnarok
 	@echo "🔥 Starting RAGnarok..."
 	@docker-compose up -d
 	@echo "✅ RAGnarok started!"
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 10
+	@$(MAKE) test
 	@echo "🌐 Frontend: http://localhost:3000"
 	@echo "📚 API Docs: http://localhost:8000/docs"
 
@@ -36,12 +39,18 @@ restart: ## Quick restart (no rebuild)
 	@echo "🔄 Quick restart..."
 	@docker-compose restart
 	@echo "✅ Restarted!"
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 10
+	@$(MAKE) test
 
 rebuild: ## Restart with code changes (rebuilds images)
 	@echo "🔨 Rebuilding with fresh code..."
 	@docker-compose down
 	@docker-compose up --build -d
 	@echo "✅ Rebuilt with latest code!"
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 10
+	@$(MAKE) test
 
 logs: ## View logs
 	@echo "📜 Viewing logs (Ctrl+C to exit)..."
@@ -53,7 +62,12 @@ elogs: ## View logs
 
 test: ## Test all services
 	@echo "🧪 Testing RAGnarok services..."
-	@curl -s http://localhost:8000/api/test >/dev/null && echo "✅ Main API working" || echo "❌ Main API not responding"
-	@curl -s http://localhost:8001/health >/dev/null && echo "✅ PDF Processor working" || echo "❌ PDF Processor not responding"
-	@curl -s http://localhost:3000 >/dev/null && echo "✅ Frontend working" || echo "❌ Frontend not responding"
-	@echo "🏁 Test complete!"
+	@echo "   📡 Testing Main API..."
+	@curl -s http://localhost:8000/api/test >/dev/null && echo "   ✅ Main API working" || echo "   ❌ Main API not responding"
+	@echo "   📄 Testing PDF Processor..."
+	@curl -s http://localhost:8001/health >/dev/null && echo "   ✅ PDF Processor working" || echo "   ❌ PDF Processor not responding"
+	@echo "   🌐 Testing Frontend..."
+	@curl -s http://localhost:3000 >/dev/null && echo "   ✅ Frontend working" || echo "   ❌ Frontend not responding"
+	@echo "   🤖 Testing Ollama LLM..."
+	@curl -s http://localhost:11434/api/tags >/dev/null && echo "   ✅ Ollama working" || echo "   ❌ Ollama not responding"
+	@echo "🏁 All tests complete!"

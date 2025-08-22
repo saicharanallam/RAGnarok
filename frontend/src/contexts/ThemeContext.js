@@ -12,13 +12,30 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
+    // Check localStorage first, then system preference, default to dark
     const savedTheme = localStorage.getItem('ragnarok-theme');
-    return savedTheme || 'light';
+    if (savedTheme) {
+      return savedTheme;
+    }
+    
+    // Check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    
+    // Default to dark mode
+    return 'dark';
   });
 
   useEffect(() => {
+    // Save theme to localStorage
     localStorage.setItem('ragnarok-theme', theme);
+    
+    // Apply theme to document
     document.documentElement.setAttribute('data-theme', theme);
+    
+    // Also set a class for additional styling if needed
+    document.documentElement.classList.toggle('dark-mode', theme === 'dark');
   }, [theme]);
 
   const toggleTheme = () => {

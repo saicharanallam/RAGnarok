@@ -1,0 +1,124 @@
+/* Additional Tab Styles for MainContent */
+
+/* Chat Tab Styles */
+.chat-tab__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+}
+
+.chat-tab__interface {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Documents Tab Styles */
+.documents-tab__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.documents-tab__header h2 {
+  margin: 0;
+  color: var(--text-primary, #2c3e50);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.documents-tab__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.documents-tab__list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.documents-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary, #6c757d);
+}
+
+.documents-empty__icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.documents-empty h3 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary, #2c3e50);
+  font-size: 20px;
+}
+
+.documents-empty p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  max-width: 400px;
+}
+
+/* Analytics Tab Styles */
+.analytics-tab {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Tab Badge */
+.tab-badge {
+  color: #4CAF50;
+  font-size: 8px;
+  margin-left: 4px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Mobile responsive for tabs */
+@media (max-width: 768px) {
+  .main-content__tabs {
+    padding: 0 var(--spacing-md);
+  }
+  
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .main-content__tab-content {
+    padding: 0 var(--spacing-md);
+  }
+  
+  .documents-tab__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .documents-tab__actions {
+    justify-content: stretch;
+  }
+  
+  .documents-empty__icon {
+    font-size: 48px;
+  }
+  
+  .documents-empty h3 {
+    font-size: 18px;
+  }
+}

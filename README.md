@@ -25,6 +25,14 @@ docker-compose up --build
 2. **Chat**: Ask questions about your document
 3. **Get AI answers**: With context from your PDFs!
 
+## 🤖 AI Model Features
+
+- **Model**: `llama3.2:8b` - Meta's latest and most capable model
+- **Quality**: Excellent reasoning and text generation for RAG applications
+- **Speed**: Optimized for real-time chat interactions
+- **Context**: Enhanced with your document content for accurate answers
+- **Auto-setup**: Model downloads automatically on first startup
+
 ## 🛠️ Commands
 
 ### Makefile
@@ -50,6 +58,7 @@ python ragnarok.py clean    # Remove everything
 - Docker & Docker Compose
 - 8GB+ RAM (for AI model)
 - 10GB+ disk space
+- Internet connection (first time only - for model download)
 
 ## 🏗️ Architecture
 
@@ -57,13 +66,19 @@ python ragnarok.py clean    # Remove everything
 - **Main API** (Port 8000): FastAPI service
 - **PDF Processor** (Port 8001): Document processing
 - **Database**: PostgreSQL + ChromaDB + Redis
-- **AI**: Ollama (local LLM)
+- **AI**: Ollama with llama3.2:8b (local LLM)
 
 ## 🚨 Troubleshooting
 
 **Services won't start?**
 ```bash
 make clean && make start
+```
+
+**First startup taking long?**
+The system automatically downloads the LLM model (~4.7GB). Check progress with:
+```bash
+make logs
 ```
 
 **Want to see what's happening?**

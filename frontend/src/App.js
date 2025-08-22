@@ -3,12 +3,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationContainer } from './components/ui/Notification';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
-import AdminPanel from './components/AdminPanel';
 import './styles/variables.css';
 import './App.css';
 
 function App() {
-  const [currentView, setCurrentView] = useState('chat'); // 'chat', 'admin'
   const [notifications, setNotifications] = useState([]);
 
   const addNotification = (notification) => {
@@ -24,19 +22,10 @@ function App() {
   return (
     <ThemeProvider>
       <div className="app">
-        <Header 
-          currentView={currentView} 
-          onViewChange={setCurrentView}
-          onNotification={addNotification}
-        />
+        <Header />
         
         <main className="app__main">
-          {currentView === 'chat' && (
-            <MainContent onNotification={addNotification} />
-          )}
-          {currentView === 'admin' && (
-            <AdminPanel onNotification={addNotification} />
-          )}
+          <MainContent onNotification={addNotification} />
         </main>
 
         <NotificationContainer 

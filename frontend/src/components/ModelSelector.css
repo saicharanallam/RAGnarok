@@ -1,0 +1,243 @@
+.model-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.model-selector__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+}
+
+.model-selector__title h2 {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.model-selector__current {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.model-selector__label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.model-selector__current-model {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.model-selector__error {
+  background: var(--error-bg);
+  border: 1px solid var(--error-color);
+  color: var(--error-text);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.model-selector__models h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.model-selector__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.model-selector__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.model-selector__item:hover {
+  border-color: var(--primary-color);
+  background: var(--bg-secondary);
+}
+
+.model-selector__item--current {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+}
+
+.model-selector__item-info {
+  flex: 1;
+}
+
+.model-selector__item-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.model-selector__item-badge {
+  background: var(--success-color);
+  color: white;
+  padding: 2px var(--spacing-xs);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.model-selector__item-details {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.model-selector__item-size {
+  font-weight: 500;
+}
+
+.model-selector__item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.model-selector__empty {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.model-selector__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+/* Download Modal Styles */
+.download-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.download-modal__input input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-family: var(--font-mono);
+}
+
+.download-modal__input input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.download-modal__examples {
+  background: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+.download-modal__examples h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.download-modal__examples ul {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.download-modal__examples li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.download-modal__examples code {
+  background: var(--bg-tertiary);
+  padding: 2px var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  color: var(--primary-color);
+}
+
+.download-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .model-selector__current-model {
+  background: var(--bg-secondary-dark);
+  color: var(--primary-color);
+}
+
+[data-theme="dark"] .model-selector__item--current {
+  background: var(--bg-secondary-dark);
+  border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .download-modal__input input {
+  background: var(--bg-primary-dark);
+  color: var(--text-primary-dark);
+  border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .download-modal__examples {
+  background: var(--bg-secondary-dark);
+}
+
+[data-theme="dark"] .download-modal__examples code {
+  background: var(--bg-tertiary-dark);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .model-selector__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .model-selector__item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .model-selector__item-actions {
+    justify-content: stretch;
+  }
+  
+  .model-selector__item-details {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+}

@@ -74,7 +74,10 @@ class DatabaseClient:
         extraction_method: str,
         processing_end_time: datetime,
         processing_duration: float,
-        text_length: Optional[int] = None
+        text_length: Optional[int] = None,
+        summary: Optional[str] = None,
+        key_topics: Optional[str] = None,
+        content_preview: Optional[str] = None
     ):
         """Update PDF as completed with processing results."""
         try:
@@ -89,6 +92,12 @@ class DatabaseClient:
             }
             if text_length:
                 data["text_length"] = text_length
+            if summary:
+                data["summary"] = summary
+            if key_topics:
+                data["key_topics"] = key_topics
+            if content_preview:
+                data["content_preview"] = content_preview
             
             async with httpx.AsyncClient() as client:
                 response = await client.patch(

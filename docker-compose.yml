@@ -15,7 +15,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
+      - OLLAMA_MODEL=llama3.2:8b
       - PDF_SERVICE_URL=http://document-processor:8001
       - REDIS_URL=redis://redis:6379
       - CHROMA_PERSIST_DIRECTORY=/app/chroma_db
@@ -23,6 +23,8 @@ services:
       - db
       - redis
       - ollama
+    networks:
+      - ragnarok_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/test"]
       interval: 30s
@@ -48,6 +50,8 @@ services:
     depends_on:
       - db
       - main-api
+    networks:
+      - ragnarok_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
@@ -62,9 +66,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_BACKEND_URL=http://localhost:8000
+      - REACT_APP_API_BASE_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - main-api
+    networks:
+      - ragnarok_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -81,6 +88,8 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - ragnarok_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ragnarok"]
       interval: 10s
@@ -93,6 +102,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - ragnarok_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -100,16 +111,16 @@ services:
       retries: 3
 
   ollama:
-    image: ollama/ollama:latest
+    build: ./ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    networks:
+      - ragnarok_network
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_MODEL=llama3.2:8b
 
 volumes:
   pgdata:
@@ -117,3 +128,7 @@ volumes:
   chroma_data:
   redis_data:
   shared_uploads:
+
+networks:
+  ragnarok_network:
+    driver: bridge

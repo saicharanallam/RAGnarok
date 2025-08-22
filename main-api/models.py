@@ -23,6 +23,11 @@ class PDF(Base):
     file_size = Column(Integer, nullable=True)  # in bytes
     page_count = Column(Integer, nullable=True)
     text_length = Column(Integer, nullable=True)  # total characters extracted
+    
+    # Content analysis
+    summary = Column(Text, nullable=True)  # AI-generated summary
+    key_topics = Column(Text, nullable=True)  # JSON array of main topics
+    content_preview = Column(Text, nullable=True)  # First 500 chars of content
 
 class LLMInteraction(Base):
     __tablename__ = "llm_interactions"

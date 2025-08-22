@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Card from './ui/Card';
 import Button from './ui/Button';
+import apiConfig from '../config/api';
 import './UploadSection.css';
 
 const UploadSection = ({ onUploadSuccess, onNotification }) => {
@@ -111,7 +112,8 @@ const UploadSection = ({ onUploadSuccess, onNotification }) => {
         throw new Error('Upload failed');
       };
 
-      xhr.open('POST', '/api/pdfs/upload');
+      const uploadUrl = apiConfig.getUrl('api/pdfs/upload');
+      xhr.open('POST', uploadUrl);
       xhr.send(formData);
 
     } catch (error) {

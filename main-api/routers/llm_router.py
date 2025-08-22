@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import httpx
 import time
 import logging
+import json
 
 from database import get_db
 from schemas import LLMRequest, LLMResponse
@@ -13,13 +15,13 @@ from config import settings
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.post("/llm", response_model=dict)
+@router.post("/llm")
 async def llm_interact(
     request: LLMRequest,
     db: Session = Depends(get_db)
 ):
     """
-    Enhanced LLM interaction with RAG context integration.
+    Enhanced LLM interaction with RAG context integration - Streaming.
     """
     start_time = time.time()
     
@@ -40,12 +42,12 @@ async def llm_interact(
             else:
                 logger.info("No relevant context found for prompt")
         
-        # Prepare Ollama request (non-streaming)
+        # Prepare Ollama request (streaming)
         ollama_url = f"{settings.OLLAMA_URL}/api/generate"
         payload = {
             "model": settings.OLLAMA_MODEL,
             "prompt": enhanced_prompt,
-            "stream": False,
+            "stream": True,
             "options": {
                 "temperature": 0.7,
                 "top_p": 0.9,
@@ -53,44 +55,55 @@ async def llm_interact(
             }
         }
 
-        # Make request to Ollama
-        full_response = ""
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            response = await client.post(ollama_url, json=payload)
-            
-            if response.status_code != 200:
-                error_msg = f"Error from LLM service: {response.status_code}"
-                logger.error(error_msg)
-                raise HTTPException(status_code=500, detail=error_msg)
-            
-            data = response.json()
-            full_response = data.get("response", "")
-        
-        # Log interaction to database
-        end_time = time.time()
-        processing_time = end_time - start_time
-        
-        interaction = LLMInteraction(
-            prompt_length=len(request.prompt),
-            use_rag=request.use_rag,
-            context_found=context_found,
-            context_length=context_length,
-            response_length=len(full_response),
-            response_time=processing_time,
-            model_used=settings.OLLAMA_MODEL,
-            prompt=request.prompt[:500],  # Store first 500 chars
-            response=full_response[:1000]  # Store first 1000 chars
-        )
-        db.add(interaction)
-        db.commit()
-        
-        return {
-            "response": full_response,
-            "context_used": context_found,
-            "context_length": context_length,
-            "response_time": processing_time,
-            "sources": []  # TODO: Add source information if needed
-        }
+        async def generate_stream():
+            full_response = ""
+            try:
+                async with httpx.AsyncClient(timeout=180.0) as client:
+                    async with client.stream('POST', ollama_url, json=payload) as response:
+                        if response.status_code != 200:
+                            error_msg = f"Error from LLM service: {response.status_code}"
+                            logger.error(error_msg)
+                            yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                            return
+                        
+                        async for chunk in response.aiter_lines():
+                            if chunk:
+                                try:
+                                    data = json.loads(chunk)
+                                    if 'response' in data:
+                                        token = data['response']
+                                        full_response += token
+                                        yield f"data: {json.dumps({'token': token})}\n\n"
+                                    
+                                    if data.get('done', False):
+                                        # Log interaction to database
+                                        end_time = time.time()
+                                        processing_time = end_time - start_time
+                                        
+                                        interaction = LLMInteraction(
+                                            prompt_length=len(request.prompt),
+                                            use_rag=request.use_rag,
+                                            context_found=context_found,
+                                            context_length=context_length,
+                                            response_length=len(full_response),
+                                            response_time=processing_time,
+                                            model_used=settings.OLLAMA_MODEL,
+                                            prompt=request.prompt[:500],
+                                            response=full_response[:1000]
+                                        )
+                                        db.add(interaction)
+                                        db.commit()
+                                        
+                                        yield f"data: {json.dumps({'done': True, 'context_used': context_found, 'context_length': context_length, 'response_time': processing_time})}\n\n"
+                                        break
+                                except json.JSONDecodeError:
+                                    continue
+                                    
+            except Exception as e:
+                logger.error(f"LLM streaming failed: {str(e)}")
+                yield f"data: {json.dumps({'error': f'LLM interaction failed: {str(e)}'})}\n\n"
+
+        return StreamingResponse(generate_stream(), media_type="text/plain")
         
     except Exception as e:
         logger.error(f"LLM interaction failed: {str(e)}")

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Card from './ui/Card';
 import Button from './ui/Button';
+import apiConfig from '../config/api';
 import './ChatInterface.css';
 
 const ChatInterface = ({ onNotification, documentsAvailable }) => {
@@ -58,7 +59,19 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/llm', {
+      // Create assistant message for streaming
+      const assistantMessage = {
+        id: Date.now() + 1,
+        type: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        sources: [],
+        isStreaming: true
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      const response = await fetch(apiConfig.getUrl('api/llm'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,24 +79,55 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
         body: JSON.stringify({
           prompt: userMessage.content,
           use_rag: documentsAvailable
-        }),
+        })
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-      const assistantMessage = {
-        id: Date.now() + 1,
-        type: 'assistant',
-        content: data.response || 'Sorry, I couldn\'t generate a response.',
-        timestamp: new Date(),
-        sources: data.sources || []
-      };
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      setMessages(prev => [...prev, assistantMessage]);
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.token) {
+                // Update streaming message
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessage.id 
+                    ? { ...msg, content: msg.content + data.token }
+                    : msg
+                ));
+              }
+              
+              if (data.done) {
+                // Mark streaming as complete
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessage.id 
+                    ? { ...msg, isStreaming: false, sources: data.sources || [] }
+                    : msg
+                ));
+              }
+              
+              if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (parseError) {
+              console.warn('Failed to parse streaming data:', parseError);
+            }
+          }
+        }
+      }
 
     } catch (error) {
       console.error('Chat error:', error);
@@ -167,6 +211,9 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
                 <div className="chat-message__content">
                   <div className="chat-message__text">
                     {message.content}
+                    {message.isStreaming && (
+                      <span className="streaming-cursor">▊</span>
+                    )}
                   </div>
                   
                   {message.sources && message.sources.length > 0 && (
