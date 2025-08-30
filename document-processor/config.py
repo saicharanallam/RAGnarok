@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     # Processing limits
     MAX_CHUNK_SIZE: int = 1000
     MAX_CHUNKS: int = 1000
-    MAX_CONTEXT_LENGTH: int = 2000
+    MAX_CONTEXT_LENGTH: int = 32000
     
     # OCR Configuration
-    OCR_DPI: int = 200
+    OCR_DPI: int = 300
     OCR_LANGUAGE: str = "eng"
     
     class Config:
