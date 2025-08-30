@@ -28,10 +28,12 @@ class PDFListResponse(BaseModel):
     pdfs: List[PDFResponse]
     pagination: dict
 
+from config import settings
+
 class LLMRequest(BaseModel):
     prompt: str
     use_rag: bool = True
-    max_context_length: int = 2000
+    max_context_length: int = settings.DEFAULT_CONTEXT_LENGTH
 
 class LLMResponse(BaseModel):
     response: str
