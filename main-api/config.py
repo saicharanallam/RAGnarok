@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # ChromaDB configuration
     CHROMA_PERSIST_DIRECTORY: str = "/app/chroma_db"
     
+    # RAG Configuration  
+    MAX_CONTEXT_LENGTH: int = 32000  # Support modern LLM context windows
+    DEFAULT_CONTEXT_LENGTH: int = 8000  # Better default for multi-document scenarios
+    ADAPTIVE_CONTEXT_LENGTH: int = 16000  # For complex queries
+    
     class Config:
         env_file = ".env"
 
