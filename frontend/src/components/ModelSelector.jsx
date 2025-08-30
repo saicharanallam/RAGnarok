@@ -236,9 +236,8 @@ const ModelSelector = ({ onNotification }) => {
           <div className="download-modal__examples">
             <h4>Popular Models:</h4>
             <ul>
-              <li><code>llama3.2:8b</code> - Good balance (current)</li>
-              <li><code>llama3.2:70b</code> - High quality, slower</li>
-              <li><code>mistral:7b</code> - Alternative model</li>
+              <li><code>mistral:7b</code> - Good balance (current)</li>
+              <li><code>llama3.2:3b</code> - High quality, slower</li>
               <li><code>codellama:7b</code> - Code-focused</li>
             </ul>
           </div>

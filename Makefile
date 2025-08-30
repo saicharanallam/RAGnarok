@@ -1,6 +1,6 @@
 # RAGnarok Makefile - Essential Commands Only
 
-.PHONY: help setup start stop restart rebuild logs test
+.PHONY: help setup start stop restart rebuild logs test ollama-pull ollama-list ollama-logs ollama-download ollama-test ollama-chat
 
 help: ## Show available commands
 	@echo "🔥 RAGnarok - Essential Commands"
@@ -71,3 +71,92 @@ test: ## Test all services
 	@echo "   🤖 Testing Ollama LLM..."
 	@curl -s http://localhost:11434/api/tags >/dev/null && echo "   ✅ Ollama working" || echo "   ❌ Ollama not responding"
 	@echo "🏁 All tests complete!"
+
+ollama-pull: ## Download a specific LLM model to Ollama
+	@echo "🤖 Downloading LLM model..."
+	@if [ -z "$(MODEL)" ]; then \
+			echo "Usage: make ollama-pull MODEL=mistral:7b"; \
+	echo "Available models: mistral:7b, llama3.2:70b, codellama:7b, llama3.2:3b"; \
+	exit 1; \
+	fi
+	@docker exec ragnarok_ollama_1 ollama pull $(MODEL)
+	@echo "✅ Model $(MODEL) downloaded successfully!"
+
+ollama-list: ## List available models in Ollama
+	@echo "🤖 Available models in Ollama:"
+	@docker exec ragnarok_ollama_1 ollama list
+
+ollama-logs: ## View Ollama logs
+	@echo "🤖 Viewing Ollama logs (Ctrl+C to exit)..."
+	@docker-compose logs -f ollama
+
+ollama-download: ## Download a model to Ollama (check if exists first)
+	@echo "🤖 Downloading model to Ollama..."
+	@if [ -z "$(MODEL)" ]; then \
+			echo "Usage: make ollama-download MODEL=mistral:7b"; \
+	echo "Available models: mistral:7b, llama3.2:3b, llama3.2:70b, codellama:7b"; \
+	exit 1; \
+	fi
+	@echo "🔍 Checking if model $(MODEL) already exists..."
+	@if curl -s http://localhost:11434/api/tags | grep -q "$(MODEL)"; then \
+		echo "✅ Model $(MODEL) already exists, skipping download"; \
+	else \
+		echo "📥 Model $(MODEL) not found, downloading..."; \
+		curl -s -X POST http://localhost:11434/api/pull -d "{\"name\":\"$(MODEL)\"}"; \
+		echo "✅ Model $(MODEL) downloaded successfully!"; \
+	fi
+
+ollama-test: ## Test prompt generation with Ollama
+	@echo "🤖 Testing prompt generation with Ollama..."
+	@if [ -z "$(PROMPT)" ]; then \
+		echo "Usage: make ollama-test PROMPT='Your test prompt here'"; \
+		echo "Example: make ollama-test PROMPT='What is 2+2?'"; \
+		exit 1; \
+	fi
+	@if [ -z "$(MODEL)" ]; then \
+		echo "⚠️  No model specified, using default: mistral:7b"; \
+		curl -s -X POST http://localhost:11434/api/generate \
+			-d "{\"model\":\"mistral:7b\",\"prompt\":\"$(PROMPT)\",\"stream\":false}"; \
+	else \
+		echo "🎯 Using specified model: $(MODEL)"; \
+		curl -s -X POST http://localhost:11434/api/generate \
+			-d "{\"model\":\"$(MODEL)\",\"prompt\":\"$(PROMPT)\",\"stream\":false}"; \
+	fi
+
+ollama-chat: ## Interactive chat with Ollama
+	@echo "🤖 Starting interactive chat with Ollama..."
+	@if [ -z "$(MODEL)" ]; then \
+		echo "⚠️  No model specified, using default: mistral:7b"; \
+		echo "💬 Chat started with model: mistral:7b (Type 'quit' to exit)"; \
+		echo "=================================================="; \
+		while true; do \
+			read -p "You: " prompt; \
+			if [ "$$prompt" = "quit" ]; then \
+				echo "👋 Goodbye!"; \
+				break; \
+			fi; \
+			if [ -n "$$prompt" ]; then \
+				echo "🤖 AI:"; \
+				curl -s -X POST http://localhost:11434/api/generate \
+					-d "{\"model\":\"mistral:7b\",\"prompt\":\"$$prompt\",\"stream\":false}"; \
+				echo ""; \
+			fi; \
+		done; \
+	else \
+		echo "🎯 Using specified model: $(MODEL)"; \
+		echo "💬 Chat started with model: $(MODEL) (Type 'quit' to exit)"; \
+		echo "=================================================="; \
+		while true; do \
+			read -p "You: " prompt; \
+			if [ "$$prompt" = "quit" ]; then \
+				echo "👋 Goodbye!"; \
+				break; \
+			fi; \
+			if [ -n "$$prompt" ]; then \
+				echo "🤖 AI:"; \
+				curl -s -X POST http://localhost:11434/api/generate \
+					-d "{\"model\":\"$(MODEL)\",\"prompt\":\"$$prompt\",\"stream\":false}"; \
+				echo ""; \
+			fi; \
+		done; \
+	fi

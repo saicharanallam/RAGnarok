@@ -101,6 +101,7 @@ class RAGService:
         Returns: (enhanced_prompt, context_found, context_length)
         """
         try:
+            logger.info(f"Enhancing prompt with context here in rag service")
             context, context_length, context_found = await self.get_relevant_context(user_prompt, max_context_length)
             
             if not context_found:

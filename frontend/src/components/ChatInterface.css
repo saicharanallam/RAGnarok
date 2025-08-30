@@ -146,6 +146,8 @@
   word-wrap: break-word;
 }
 
+
+
 .chat-message__sources {
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-md);

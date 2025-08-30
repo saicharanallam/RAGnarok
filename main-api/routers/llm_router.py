@@ -24,14 +24,17 @@ async def llm_interact(
     Enhanced LLM interaction with RAG context integration - Streaming.
     """
     start_time = time.time()
-    
+    logger.info(f"Enhanced prompt height 1")
     try:
         # Enhance prompt with RAG context if requested
         enhanced_prompt = request.prompt
         context_found = False
         context_length = 0
-        
+        print("here here")
+        logger.info(f"Enhanced prompt height 2")
+
         if request.use_rag:
+            logger.info(f"Enhanced prompt height 3")
             enhanced_prompt, context_found, context_length = await rag_service.enhance_prompt_with_context(
                 request.prompt, 
                 max_context_length=2000
@@ -54,15 +57,38 @@ async def llm_interact(
                 "max_tokens": 2000
             }
         }
+        
+        # Debug logging - print the full request details
+        print(f"🚀 SENDING REQUEST TO OLLAMA!")
+        print(f"   URL: {ollama_url}")
+        print(f"   Model: {settings.OLLAMA_MODEL}")
+        print(f"   Payload: {json.dumps(payload, indent=2)}")
+        print(f"   Enhanced prompt length: {len(enhanced_prompt)} chars")
+        
+        logger.info(f"🚀 Sending request to Ollama:")
+        logger.info(f"   URL: {ollama_url}")
+        logger.info(f"   Model: {settings.OLLAMA_MODEL}")
+        logger.info(f"   Payload: {json.dumps(payload, indent=2)}")
+        logger.info(f"   Enhanced prompt length: {len(enhanced_prompt)} chars")
 
         async def generate_stream():
             full_response = ""
             try:
+                print(f"🌐 ABOUT TO CALL OLLAMA AT: {ollama_url}")
+                logger.info(f"🌐 About to call Ollama at: {ollama_url}")
+                
                 async with httpx.AsyncClient(timeout=180.0) as client:
                     async with client.stream('POST', ollama_url, json=payload) as response:
+                        logger.info(f"📡 Ollama response status: {response.status_code}")
                         if response.status_code != 200:
                             error_msg = f"Error from LLM service: {response.status_code}"
-                            logger.error(error_msg)
+                            logger.error(f"❌ {error_msg}")
+                            # Try to get error details from response
+                            try:
+                                error_body = await response.text()
+                                logger.error(f"   Error body: {error_body}")
+                            except:
+                                logger.error("   Could not read error body")
                             yield f"data: {json.dumps({'error': error_msg})}\n\n"
                             return
                         
@@ -122,13 +148,13 @@ async def search_documents(
             return []
             
         # Search for relevant chunks
-        results = rag_service.search_relevant_chunks(request.prompt, max_chunks=10)
+        results = await rag_service.search_similar_chunks(request.prompt, n_results=10)
         
         return [
             {
                 "content": chunk["content"][:200] + "..." if len(chunk["content"]) > 200 else chunk["content"],
                 "similarity": chunk.get("similarity", 0.0),
-                "source": chunk.get("source", "Unknown")
+                "source": chunk.get("metadata", {}).get("filename", "Unknown")
             }
             for chunk in results
         ]

@@ -15,7 +15,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3.2:8b
+      - OLLAMA_MODEL=mistral:7b
       - PDF_SERVICE_URL=http://document-processor:8001
       - REDIS_URL=redis://redis:6379
       - CHROMA_PERSIST_DIRECTORY=/app/chroma_db
@@ -111,16 +111,18 @@ services:
       retries: 3
 
   ollama:
-    build: ./ollama
-    ports:
-      - "11434:11434"
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
     volumes:
       - ollama_data:/root/.ollama
-    networks:
-      - ragnarok_network
-    environment:
-      - OLLAMA_KEEP_ALIVE=24h
-      - OLLAMA_MODEL=llama3.2:8b
+    networks: [ragnarok_network]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
 
 volumes:
   pgdata:

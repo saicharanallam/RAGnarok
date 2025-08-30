@@ -54,7 +54,7 @@ case "$1" in
         if [ -z "$2" ]; then
             echo -e "${RED}❌ Please specify a model name${NC}"
             echo "Usage: $0 rm <model_name>"
-            echo "Example: $0 rm llama3.2:8b"
+            echo "Example: $0 rm mistral:7b"
             exit 1
         fi
         echo -e "${YELLOW}🗑️ Removing model: $2${NC}"
@@ -87,12 +87,12 @@ case "$1" in
         echo "Examples:"
         echo "  $0 list"
         echo "  $0 pull llama3.2:70b"
-        echo "  $0 rm llama3.2:8b"
+        echo "  $0 rm mistral:7b"
         echo "  $0 info"
         echo "  $0 logs"
         echo ""
         echo "Popular models:"
-        echo "  llama3.2:8b    - Good balance (default)"
+        echo "  mistral:7b      - Good balance (default)"
         echo "  llama3.2:70b   - High quality, slower"
         echo "  llama3.2:1b    - Fast, lower quality"
         echo "  mistral:7b     - Alternative model"

@@ -6,6 +6,10 @@ import './DocumentList.css';
 
 const DocumentList = ({ documents, onDelete, onRefresh, loading, onNotification }) => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, document: null });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -66,6 +70,52 @@ const DocumentList = ({ documents, onDelete, onRefresh, loading, onNotification 
     setDeleteModal({ isOpen: false, document: null });
   };
 
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    setShowSearchResults(true);
+
+    try {
+      const response = await fetch('/api/llm/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: searchQuery.trim(),
+          use_rag: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const results = await response.json();
+      setSearchResults(results);
+      
+      if (results.length === 0) {
+        onNotification('No relevant document chunks found for your search query.', 'info');
+      } else {
+        onNotification(`Found ${results.length} relevant document chunks!`, 'success');
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      onNotification('Search failed. Please try again.', 'error');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
   if (loading) {
     return (
       <div className="document-list__loading">
@@ -91,6 +141,43 @@ const DocumentList = ({ documents, onDelete, onRefresh, loading, onNotification 
         <div className="document-list__stats">
           <span>{documents.length} document{documents.length !== 1 ? 's' : ''}</span>
         </div>
+        
+        {/* Search Bar */}
+        <div className="document-list__search">
+          <form onSubmit={handleSearch} className="search-form">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search document content..."
+              className="search-input"
+              disabled={isSearching}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              size="small"
+              disabled={!searchQuery.trim() || isSearching}
+              loading={isSearching}
+              icon="🔍"
+            >
+              Search
+            </Button>
+            {showSearchResults && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="small"
+                onClick={clearSearch}
+                icon="❌"
+                title="Clear search"
+              >
+                Clear
+              </Button>
+            )}
+          </form>
+        </div>
+        
         <Button
           variant="ghost"
           size="small"
@@ -197,6 +284,35 @@ const DocumentList = ({ documents, onDelete, onRefresh, loading, onNotification 
           </Card>
         ))}
       </div>
+      
+      {/* Search Results */}
+      {showSearchResults && searchResults.length > 0 && (
+        <div className="document-list__search-results">
+          <div className="search-results__header">
+            <h3>🔍 Search Results for "{searchQuery}"</h3>
+            <span className="search-results__count">
+              {searchResults.length} chunks found
+            </span>
+          </div>
+          <div className="search-results__list">
+            {searchResults.map((result, index) => (
+              <div key={index} className="search-result__item">
+                <div className="search-result__content">
+                  {result.content}
+                </div>
+                <div className="search-result__meta">
+                  <span className="search-result__source">
+                    📄 {result.source}
+                  </span>
+                  <span className="search-result__similarity">
+                    🎯 {Math.round(result.similarity * 100)}% match
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal

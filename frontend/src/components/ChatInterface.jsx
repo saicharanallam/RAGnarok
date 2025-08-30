@@ -8,6 +8,7 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [useRAG, setUseRAG] = useState(true);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -27,7 +28,7 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
           id: 1,
           type: 'assistant',
           content: documentsAvailable 
-            ? '🔥 Welcome to RAGnarok! I can help you explore and understand your uploaded documents. What would you like to know?'
+            ? '🔥 Welcome to RAGnarok! I can chat with you and optionally use your documents for context. Toggle RAG ON/OFF to control document usage. What would you like to know?'
             : '👋 Welcome to RAGnarok! Upload some PDF documents first, then I can help you explore and understand their content.',
           timestamp: new Date()
         }
@@ -41,6 +42,8 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
       handleSubmit(e);
     }
   };
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,7 +81,7 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
         },
         body: JSON.stringify({
           prompt: userMessage.content,
-          use_rag: documentsAvailable
+          use_rag: documentsAvailable && useRAG
         })
       });
 
@@ -257,6 +260,15 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
             <Button
               variant="ghost"
               size="small"
+              onClick={() => setUseRAG(!useRAG)}
+              icon={useRAG ? "🧠" : "💭"}
+              title={useRAG ? "RAG enabled - using document context" : "RAG disabled - pure LLM chat"}
+            >
+              {useRAG ? "RAG ON" : "RAG OFF"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="small"
               onClick={handleClearChat}
               icon="🗑️"
             >
@@ -272,7 +284,7 @@ const ChatInterface = ({ onNotification, documentsAvailable }) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={documentsAvailable ? "Ask me anything about your documents... (Shift+Enter for new line)" : "Upload documents first to start chatting..."}
+              placeholder={documentsAvailable ? "Ask me anything... (Shift+Enter for new line)" : "Upload documents first to start chatting..."}
               disabled={isLoading || !documentsAvailable}
               className="chat-input__text"
               rows={3}

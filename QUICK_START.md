@@ -6,13 +6,13 @@
 make start
 ```
 
-**First time?** The system will automatically download the LLM model (llama3.2:8b) - this takes 2-5 minutes depending on your internet speed.
+**First time?** The system will automatically download the LLM model (mistral:7b) - this takes 2-5 minutes depending on your internet speed.
 
 **Done!** Go to http://localhost:3000
 
 ## 🤖 LLM Model Information
 
-- **Model**: `llama3.2:8b` (Meta's latest Llama 3.2 model)
+- **Model**: `mistral:7b` (Mistral AI's high-quality 7B parameter model)
 - **Size**: ~4.7GB download
 - **Quality**: Excellent for RAG applications, good balance of speed and accuracy
 - **Auto-download**: Model is automatically downloaded during first startup
@@ -51,7 +51,7 @@ docker exec -it ragnarok-ollama-1 ollama list
 
 **Remove a model:**
 ```bash
-docker exec -it ragnarok-ollama-1 ollama rm llama3.2:8b
+docker exec -it ragnarok-ollama-1 ollama rm mistral:7b
 ```
 
 ## Troubleshooting
@@ -82,7 +82,7 @@ make stop && make start
 # Command line
 ./scripts/manage_models.sh list      # Show models
 ./scripts/manage_models.sh pull llama3.2:70b  # Download new model
-./scripts/manage_models.sh rm llama3.2:8b     # Remove model
+./scripts/manage_models.sh rm mistral:7b     # Remove model
 
 # Web interface
 # Go to Analytics tab → LLM Model Management

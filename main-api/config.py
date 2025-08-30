@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     
     # Ollama configuration
     OLLAMA_URL: str = "http://ollama:11434"
-    OLLAMA_MODEL: str = "llama3.2:8b"  # Better quality, good balance of speed/accuracy
+    OLLAMA_MODEL: str = "mistral:7b"  # Better quality, good balance of speed/accuracy
     
     # PDF Service configuration
     PDF_SERVICE_URL: str = "http://document-processor:8001"
