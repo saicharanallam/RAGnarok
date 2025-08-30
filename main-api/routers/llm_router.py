@@ -24,20 +24,19 @@ async def llm_interact(
     Enhanced LLM interaction with RAG context integration - Streaming.
     """
     start_time = time.time()
-    logger.info(f"Enhanced prompt height 1")
+    logger.debug(f"Starting LLM interaction")
     try:
         # Enhance prompt with RAG context if requested
         enhanced_prompt = request.prompt
         context_found = False
         context_length = 0
-        print("here here")
-        logger.info(f"Enhanced prompt height 2")
+        logger.debug(f"Processing RAG request: use_rag={request.use_rag}")
 
         if request.use_rag:
-            logger.info(f"Enhanced prompt height 3")
+            logger.debug(f"Enhancing prompt with RAG context")
             enhanced_prompt, context_found, context_length = await rag_service.enhance_prompt_with_context(
                 request.prompt, 
-                max_context_length=2000
+                max_context_length=request.max_context_length
             )
             
             if context_found:
@@ -54,28 +53,18 @@ async def llm_interact(
             "options": {
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "max_tokens": 2000
+                "max_tokens": 4000
             }
         }
         
-        # Debug logging - print the full request details
-        print(f"🚀 SENDING REQUEST TO OLLAMA!")
-        print(f"   URL: {ollama_url}")
-        print(f"   Model: {settings.OLLAMA_MODEL}")
-        print(f"   Payload: {json.dumps(payload, indent=2)}")
-        print(f"   Enhanced prompt length: {len(enhanced_prompt)} chars")
-        
-        logger.info(f"🚀 Sending request to Ollama:")
-        logger.info(f"   URL: {ollama_url}")
-        logger.info(f"   Model: {settings.OLLAMA_MODEL}")
-        logger.info(f"   Payload: {json.dumps(payload, indent=2)}")
-        logger.info(f"   Enhanced prompt length: {len(enhanced_prompt)} chars")
+        # Request logging (debug level to avoid spam)
+        logger.debug(f"Sending request to Ollama: {ollama_url}")
+        logger.debug(f"Model: {settings.OLLAMA_MODEL}, Prompt length: {len(enhanced_prompt)} chars")
 
         async def generate_stream():
             full_response = ""
             try:
-                print(f"🌐 ABOUT TO CALL OLLAMA AT: {ollama_url}")
-                logger.info(f"🌐 About to call Ollama at: {ollama_url}")
+                logger.debug(f"Establishing connection to Ollama")
                 
                 async with httpx.AsyncClient(timeout=180.0) as client:
                     async with client.stream('POST', ollama_url, json=payload) as response:
