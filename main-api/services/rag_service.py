@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple, Optional
 import chromadb
 from sentence_transformers import SentenceTransformer
 import logging
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +51,13 @@ class RAGService:
             logger.error(f"Error searching chunks: {e}")
             return []
     
-    async def get_relevant_context(self, query: str, max_context_length: int = 2000) -> Tuple[str, int, bool]:
+    async def get_relevant_context(self, query: str, max_context_length: int = None) -> Tuple[str, int, bool]:
         """
         Get relevant context for a query, respecting token limits.
         Returns: (context, context_length, context_found)
         """
+        if max_context_length is None:
+            max_context_length = settings.DEFAULT_CONTEXT_LENGTH
         try:
             chunks = await self.search_similar_chunks(query, n_results=10)
             
@@ -68,8 +71,8 @@ class RAGService:
                 chunk_content = chunk['content']
                 similarity = chunk['similarity']
                 
-                # Only include chunks with reasonable similarity (> 0.3)
-                if similarity < 0.3:
+                # Only include chunks with good similarity (> 0.5 for quality)
+                if similarity < 0.5:
                     continue
                 
                 # Add source information
@@ -79,7 +82,9 @@ class RAGService:
                 chunk_with_header = chunk_header + chunk_content
                 
                 # Check if adding this chunk would exceed the limit
-                if total_length + len(chunk_with_header) > max_context_length * 4:  # 4 chars ≈ 1 token
+                # More accurate token estimation: ~3.5 chars per token on average for English
+                estimated_tokens = (total_length + len(chunk_with_header)) / 3.5
+                if estimated_tokens > max_context_length * 0.75:  # Use 75% of max to leave room for response
                     break
                 
                 context_parts.append(chunk_with_header)
@@ -95,11 +100,13 @@ class RAGService:
             logger.error(f"Error getting relevant context: {e}")
             return "", 0, False
     
-    async def enhance_prompt_with_context(self, user_prompt: str, max_context_length: int = 2000) -> Tuple[str, bool, int]:
+    async def enhance_prompt_with_context(self, user_prompt: str, max_context_length: int = None) -> Tuple[str, bool, int]:
         """
         Enhance user prompt with relevant context from the knowledge base.
         Returns: (enhanced_prompt, context_found, context_length)
         """
+        if max_context_length is None:
+            max_context_length = settings.DEFAULT_CONTEXT_LENGTH
         try:
             logger.info(f"Enhancing prompt with context here in rag service")
             context, context_length, context_found = await self.get_relevant_context(user_prompt, max_context_length)
