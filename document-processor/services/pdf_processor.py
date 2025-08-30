@@ -131,7 +131,9 @@ class PDFProcessor:
             logger.error(f"Error extracting text from PDF: {e}")
             return "", "error"
     
-    def chunk_text(self, text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]:
+    def chunk_text(self, text: str, chunk_size: int = None, overlap: int = 50) -> List[str]:
+        if chunk_size is None:
+            chunk_size = settings.MAX_CHUNK_SIZE
         """Split text into overlapping chunks."""
         if not text.strip():
             return []
